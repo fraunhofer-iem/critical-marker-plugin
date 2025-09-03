@@ -19,7 +19,7 @@ class DefaultCriticalMethodGenerator : CriticalMethodGenerator {
         val criticalMethods = mutableMapOf<String, Number>()
         var timeTaken = measureTimeMillis {
             for (srcPath in getSourceRoots(project)) {
-                criticalMethods.putAll(getCriticalMethod(srcPath, metric))
+                criticalMethods.putAll(getCriticalMethod(srcPath, metric, project))
             }
         }
 

@@ -5,6 +5,7 @@ package de.fraunhofer.iem.metricsUtil
 import com.fasterxml.jackson.databind.ObjectMapper
 import com.fasterxml.jackson.dataformat.yaml.YAMLFactory
 import com.github.mauricioaniche.ck.CK
+import com.intellij.openapi.project.Project
 import org.yaml.snakeyaml.Yaml
 import java.io.File
 import java.io.IOException
@@ -87,7 +88,7 @@ private fun getMethod(
     return MethodSearchResult(true, sig)
 }
 
-fun getCriticalMethod(projSrcPath: String, metric: Metric): MutableMap<String, out Number> {
+fun getCriticalMethod(projSrcPath: String, metric: Metric, project: Project): MutableMap<String, out Number> {
     CK().calculate(projSrcPath) { classResult ->
         classResult.methods.forEach { method ->
             val searchRes = getMethod(
@@ -109,12 +110,12 @@ fun getCriticalMethod(projSrcPath: String, metric: Metric): MutableMap<String, o
         }
     }
 
-    val processedWmc = processMethodSignatures(wmc)
-    val processedLoc = processMethodSignatures(loc)
-    val processedLcomNorm = processMethodSignatures(lcomNorm)
-    val processedTryCatchQty = processMethodSignatures(tryCatchQty)
-    val processedUniqueWordsQty = processMethodSignatures(uniqueWordsQty)
-    val processedLogStmtQty = processMethodSignatures(logStmtQty)
+    val processedWmc = processMethodSignatures(wmc, project)
+    val processedLoc = processMethodSignatures(loc, project)
+    val processedLcomNorm = processMethodSignatures(lcomNorm, project)
+    val processedTryCatchQty = processMethodSignatures(tryCatchQty, project)
+    val processedUniqueWordsQty = processMethodSignatures(uniqueWordsQty, project)
+    val processedLogStmtQty = processMethodSignatures(logStmtQty, project)
 
     return when (metric) {
         Metric.COMPLEXITY -> processedWmc
@@ -126,8 +127,8 @@ fun getCriticalMethod(projSrcPath: String, metric: Metric): MutableMap<String, o
     }
 }
 
-fun processMethodSignatures(data: Map<String, Number>): MutableMap<String, Number> {
-    val allMethods = readYamlAsList("/Users/jupitron/jupitron/work/phd/wsrmf/initial_idea/critical-marker-plugin/allSig.yml").toSet()
+fun processMethodSignatures(data: Map<String, Number>, project: Project): MutableMap<String, Number> {
+    val allMethods =  project.getService(MethodSignatureCacheService::class.java).getAll()
     val processedData = mutableMapOf<String, Number>()
 
     data.forEach { (sig, score) ->
@@ -187,12 +188,4 @@ fun getClosestMatchedMethod(sig: String, allMethods: Set<String>): String {
     }
 
     return sig
-}
-
-fun readYamlAsList(filePath: String): List<String> {
-    val yaml = Yaml()
-    File(filePath).inputStream().use { input ->
-        @Suppress("UNCHECKED_CAST")
-        return yaml.load(input) as? List<String> ?: emptyList()
-    }
 }

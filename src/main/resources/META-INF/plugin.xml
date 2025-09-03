@@ -36,6 +36,7 @@
         <projectService serviceImplementation="de.fraunhofer.iem.metricsUtil.SignatureService"/>
         <applicationService serviceImplementation="de.fraunhofer.iem.Settings"/>
         <projectService serviceInterface="de.fraunhofer.iem.metricsUtil.CriticalMethodGenerator" serviceImplementation="de.fraunhofer.iem.metricsUtil.DefaultCriticalMethodGenerator"/>
+        <projectService serviceImplementation="de.fraunhofer.iem.metricsUtil.MethodSignatureCacheService"/>
         <notificationGroup id="SecurityMarkerNotifications"
                            displayType="BALLOON"
                            isLogByDefault="true"
