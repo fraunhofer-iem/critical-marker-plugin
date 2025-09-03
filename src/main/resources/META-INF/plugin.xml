@@ -1,0 +1,48 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<idea-plugin>
+    <id>dev.example.security-marker</id>
+    <name>Security Critical Method Marker</name>
+    <vendor email="ranjith.krishnamurthy@iem.fraunhofer.de">Ranjith K</vendor>
+    <description>
+        Security critical marker and explanation to assist developers pro-actively
+    </description>
+
+
+    <depends>com.intellij.modules.platform</depends>
+    <depends>com.intellij.java</depends>
+    <depends>org.jetbrains.kotlin</depends>
+
+
+    <actions>
+        <!-- Top-level popup menu -->
+        <group id="de.fraunhofer.iem.SecurityMarkerMenu"
+               text="Security Marker"
+               popup="true"
+               class="de.fraunhofer.iem.actions.SecurityMarkerActionGroup">
+            <add-to-group group-id="MainMenu" anchor="last"/>
+            <add-to-group group-id="ToolsMenu" anchor="last"/>
+        </group>
+
+        <!-- Refresh action -->
+        <action id="de.fraunhofer.iem.RefreshSignatures"
+                class="de.fraunhofer.iem.actions.RefreshSignaturesAction"
+                text="Refresh"
+                description="Regenerate the security-critical method list"/>
+    </actions>
+
+
+    <extensions defaultExtensionNs="com.intellij">
+        <codeInsight.lineMarkerProvider language="JAVA" implementationClass="de.fraunhofer.iem.SecurityMarker"/>
+        <projectService serviceImplementation="de.fraunhofer.iem.metricsUtil.SignatureService"/>
+        <applicationService serviceImplementation="de.fraunhofer.iem.Settings"/>
+        <projectService serviceInterface="de.fraunhofer.iem.metricsUtil.CriticalMethodGenerator" serviceImplementation="de.fraunhofer.iem.metricsUtil.DefaultCriticalMethodGenerator"/>
+        <notificationGroup id="SecurityMarkerNotifications"
+                           displayType="BALLOON"
+                           isLogByDefault="true"
+                           toolWindowId="Event Log"/>
+
+        <!-- Annotators must be registered per language -->
+        <annotator language="JAVA"   implementationClass="de.fraunhofer.iem.annotators.SecurityMethodAnnotator"/>
+        <annotator language="kotlin" implementationClass="de.fraunhofer.iem.annotators.SecurityMethodAnnotator"/>
+    </extensions>
+</idea-plugin>

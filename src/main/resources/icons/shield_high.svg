@@ -1,0 +1,21 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<svg xmlns="http://www.w3.org/2000/svg"
+     viewBox="0 0 24 24"
+     class="crit crit--high">
+  <style>
+    /* The path uses currentColor; classes below set the color */
+    .crit path { fill: currentColor; }
+
+    /* Severity palette (color-blind considerate: blue → amber → red) */
+    .crit--very-low  { color: #2D9CDB; } /* blue */
+    .crit--low       { color: #56CCF2; } /* light blue */
+    .crit--medium    { color: #F2C94C; } /* amber */
+    .crit--high      { color: #F2994A; } /* orange */
+    .crit--very-high { color: #EB5757; } /* red */
+
+    /* Optional: thin outline for better contrast on varied backgrounds */
+    /* .crit path { stroke: rgba(0,0,0,.2); stroke-width: .5; } */
+  </style>
+
+  <path d="M12 2l7 3v6c0 5-3.5 9.74-7 11-3.5-1.26-7-6-7-11V5l7-3z"/>
+</svg>

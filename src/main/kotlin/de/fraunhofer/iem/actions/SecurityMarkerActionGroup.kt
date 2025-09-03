@@ -1,0 +1,18 @@
+package de.fraunhofer.iem.actions
+
+import com.intellij.openapi.actionSystem.*
+import de.fraunhofer.iem.metricsUtil.Metric
+
+class SecurityMarkerActionGroup : ActionGroup("Security Critical Marker", true) {
+    override fun getChildren(e: AnActionEvent?): Array<AnAction> {
+        val refresh = ActionManager.getInstance().getAction("de.fraunhofer.iem.RefreshSignatures")
+            ?: RefreshSignaturesAction()
+
+        // Create a submenu called "Metric" containing all single-choice toggles
+        val metricGroup = DefaultActionGroup("Metric", true).apply {
+            Metric.values().forEach { add(MetricSelectAction(it)) }
+        }
+
+        return arrayOf(refresh, metricGroup)
+    }
+}
