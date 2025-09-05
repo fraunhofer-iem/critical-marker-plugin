@@ -1,0 +1,5 @@
+llm.platform=<openai or ollama>
+api.key=<LLM platform API key>
+api.url=<LLM platform endpoint>
+model=<Model names, e.g. gpt-5-2025-08-07>
+model.temperature=0.0

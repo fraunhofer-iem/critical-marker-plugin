@@ -9,10 +9,10 @@ import com.intellij.openapi.components.Storage
 enum class Metric(val id: String, val label: String) {
     COMPLEXITY("COMPLEXITY", "Cyclomatic Complexity"),
     LOC("LOC", "Lines of Code"),
-    LCOM("LCOM", "LCOM"),
-    TRYCATCHQTY("TRYCATCHQTY", "TRYCATCHQTY"),
-    UNIQUEWORDS("UNIQUEWORDS", "UNIQUEWORDS"),
-    LOGSTMT("LOGSTMT", "LOGSTMT")
+    LCOM("LCOM", "Lack of Cohesion of Methods"),
+    TRYCATCHQTY("TRYCATCHQTY", "Number of try catch blocks"),
+    UNIQUEWORDS("UNIQUEWORDS", "Number of unique words"),
+    LOGSTMT("LOGSTMT", "Number of log statements"),
 }
 
 @State(name = "SecurityMarkerMetricsState", storages = [Storage("security-marker.xml")])

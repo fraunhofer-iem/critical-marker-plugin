@@ -3,6 +3,7 @@ package de.fraunhofer.iem.metricsUtil
 import com.intellij.openapi.components.Service
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.roots.ProjectRootManager
+import de.fraunhofer.iem.llm.LlmClient
 import kotlin.system.measureTimeMillis
 
 interface CriticalMethodGenerator {
@@ -37,9 +38,14 @@ class DefaultCriticalMethodGenerator : CriticalMethodGenerator {
         val res = mutableMapOf<String, String>()
 
         timeTaken = measureTimeMillis {
-            res.putAll(nonZerCriticalMethods.mapValues { (key, value) ->
-                "Score using ${metric}: ${value}\nExplanation: Under construction"
-            })
+            criticalMethods.mapValues { (metSig, metricValue) ->
+                if (filter(metSig)) {
+                    res[metSig] = "Score using ${metric}: ${metricValue}\nExplanation: Under construction"
+                } else {
+                    val exp = LlmClient.sendRequest(project, metSig, metric.label, metricValue)
+                    res.put(metSig, exp)
+                }
+            }
         }
 
         println("----> Completed generating explanation in $timeTaken milliseconds")
@@ -47,6 +53,19 @@ class DefaultCriticalMethodGenerator : CriticalMethodGenerator {
         return Pair(res, methodToLevelMap)
     }
 
+    //TODO: This is for testing purposes only. We need to remove this and make sure to run explanation generation in the background so it runs anmd display incrementally
+    private fun filter(sig: String): Boolean {
+        if (sig.contains("getNrOfSpecialties"))
+            return false
+
+        if (sig.contains("findOwner"))
+            return false
+
+        if (sig.contains("main"))
+            return false
+
+        return true
+    }
     private fun getSourceRoots(project: Project): List<String> {
         val roots = ProjectRootManager.getInstance(project).contentSourceRoots
         return roots.map { it.path }   // absolute paths on disk
