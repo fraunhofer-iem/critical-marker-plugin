@@ -48,7 +48,7 @@ class DefaultCriticalMethodGenerator : CriticalMethodGenerator {
                     val overview = getOverview(exp)
                     val recommendedPractices = getRecommendedPractises(exp)
                     val commonPitfall = getCommonPitfall(exp)
-                    res.put(metSig, htmlTooltip(overview, recommendedPractices, commonPitfall, metric.label, metricValue))
+                    res.put(metSig, htmlTooltip(overview, recommendedPractices, commonPitfall, metric.label, metricValue, methodToLevelMap.getOrDefault(metSig, "NA")))
                 }
             }
         }
@@ -63,8 +63,15 @@ class DefaultCriticalMethodGenerator : CriticalMethodGenerator {
         recommended: String?,
         pitfalls: String?,
         metric: String,
-        metricValue: Number
+        metricValue: Number,
+        criticalityLevel: String
     ): String {
+        var note = "<b>Note:</b> <i>$metric</i> metric is used to assess security criticality, and its score is <i>$metricValue</i>."
+
+        if (criticalityLevel != "NA") {
+            note += " This method falls under the <i>$criticalityLevel</i> level."
+        }
+
         val ov = if (overview.isNullOrBlank())
             "<i>No overview</i>"
         else
@@ -81,7 +88,7 @@ class DefaultCriticalMethodGenerator : CriticalMethodGenerator {
         ${bulletList(pitfalls)}
         <br/>
         <span style="color:gray;">
-            <b>Note:</b> $metric metric is used to assess security criticality and the score is $metricValue
+            $note
         </span>
     """.trimIndent()
 
