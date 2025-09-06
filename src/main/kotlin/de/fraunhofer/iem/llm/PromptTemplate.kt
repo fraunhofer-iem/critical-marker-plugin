@@ -19,6 +19,7 @@ When providing a response, follow the below guidelines:
 - Do not hallucinate or assume, your response should be based on the given information.
 - If the given method is not critical for security, just response with this method is not critical for the security and give the reason why it is not critical, but simply do not assume to make it critical.
 - Do not add any other unique characters to the block section, i.e.: triple backticks or triple quotes. Do not include scalars.
+- For recommendedPractises and commonPitfall, if you have more than one points, please separate it using the semicolon (;). Please do not use numbering such as 1. 2. etc. Separate the points using semicolon only strictly.
 - Format the response as a YAML document using the schema below:
 
 ---

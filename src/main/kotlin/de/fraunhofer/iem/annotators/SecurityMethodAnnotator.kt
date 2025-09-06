@@ -43,7 +43,7 @@ class SecurityMethodAnnotator : Annotator, DumbAware {
         // ✅ highlight only the name token (always inside the element)
         holder.newAnnotation(HighlightSeverity.WARNING, explanation)
             .range(element.textRange)
-            .tooltip("${explanation.replace("\n", "<br/>")}<br/>")
+            .tooltip(explanation)
             .enforcedTextAttributes(color)
             .create()
     }
