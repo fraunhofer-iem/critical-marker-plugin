@@ -136,6 +136,18 @@ class DefaultCriticalMethodGenerator : CriticalMethodGenerator {
         if (sig.contains("main"))
             return false
 
+        if (sig.contains("showOwner"))
+            return false
+
+        if (sig.contains("processCreationForm"))
+            return false
+
+        if (sig.contains("processFindForm"))
+            return false
+
+        if (sig.contains("initUpdateOwnerForm"))
+            return false
+
         return true
     }
     private fun getSourceRoots(project: Project): List<String> {
