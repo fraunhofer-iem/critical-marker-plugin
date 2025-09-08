@@ -29,15 +29,12 @@ commonPitfall: "<Common pitfall or donts that developer must avoid in the given 
 """
     }
 
-    fun buildUserPrompt(project: Project, methodSig: String, metricName: String, metricValue: Number): String {
-
-        val methodBody = getMethodCode(project, methodSig)
-
+    fun buildUserPrompt(metricName: String, metricValue: Number, methodCode: String): String {
         return """Explain the given code why it is security critical, recommended practices, and common pitfall. .
 
 Code Snippet:
 ```
-$methodBody
+$methodCode
 ```
 
 Metric used to compute the security criticality of the given method and its value:
@@ -51,7 +48,7 @@ $metricName : $metricValue
     private val SIG =
         Regex("^\\s*([\\w.$]+)#(\\w+)\\s*\\((.*)\\)\\s*$")
 
-    private fun getMethodCode(project: Project, signature: String): String? {
+    fun getMethodCode(project: Project, signature: String): String? {
         val m = SIG.matchEntire(signature) ?: return null
         val (classFqn, methodName, paramsBlob) = m.destructured
 

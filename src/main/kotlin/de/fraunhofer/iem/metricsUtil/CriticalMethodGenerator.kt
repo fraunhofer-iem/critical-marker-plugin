@@ -10,13 +10,19 @@ import kotlin.system.measureTimeMillis
 
 interface CriticalMethodGenerator {
     /** Return map: signature -> explanation and signature -> explanation */
-    //TODO: Improve the data structure here
-    fun generate(project: Project): Pair<Map<String, String>, Map<String, String>>
+    /** Generate explanations incrementally with callback for updates */
+    fun generate(
+        project: Project, 
+        onExplanationReady: (signature: String, explanation: String) -> Unit
+    ): Pair<Map<String, String>, Map<String, String>>
 }
 
 @Service(Service.Level.PROJECT)
 class DefaultCriticalMethodGenerator : CriticalMethodGenerator {
-    override fun generate(project: Project): Pair<Map<String, String>, Map<String, String>> {
+    override fun generate(
+        project: Project, 
+        onExplanationReady: (signature: String, explanation: String) -> Unit
+    ): Pair<Map<String, String>, Map<String, String>> {
         val metric = MetricState.getInstance().getSelected()
 
         val criticalMethods = mutableMapOf<String, Number>()
@@ -37,23 +43,23 @@ class DefaultCriticalMethodGenerator : CriticalMethodGenerator {
 
         println("----> Completed generating metrics in $timeTaken milliseconds")
 
-        val res = mutableMapOf<String, String>()
-
-        timeTaken = measureTimeMillis {
-            criticalMethods.mapValues { (metSig, metricValue) ->
-                if (filter(metSig)) {
-                    res[metSig] = "Score using ${metric}: ${metricValue}\nExplanation: Under construction"
-                } else {
-                    val exp = LlmClient.sendRequest(project, metSig, metric.label, metricValue)
-                    val overview = getOverview(exp)
-                    val recommendedPractices = getRecommendedPractises(exp)
-                    val commonPitfall = getCommonPitfall(exp)
-                    res.put(metSig, htmlTooltip(overview, recommendedPractices, commonPitfall, metric.label, metricValue, methodToLevelMap.getOrDefault(metSig, "NA")))
-                }
+        // Pre-compute method code within read action to avoid threading issues
+        val methodCodeMap = mutableMapOf<String, String?>()
+        com.intellij.openapi.application.ReadAction.run<RuntimeException> {
+            criticalMethods.keys.forEach { signature ->
+                methodCodeMap[signature] = de.fraunhofer.iem.llm.PromptTemplate.getMethodCode(project, signature)
             }
         }
 
-        println("----> Completed generating explanation in $timeTaken milliseconds")
+        // Create initial explanations with placeholders
+        val res = mutableMapOf<String, String>()
+        criticalMethods.forEach { (metSig, metricValue) ->
+            val placeholderExplanation = createPlaceholderExplanation(metric.label, metricValue, methodToLevelMap.getOrDefault(metSig, "NA"))
+            res[metSig] = placeholderExplanation
+        }
+
+        // Start background explanation generation with pre-computed method code
+        generateExplanationsInBackground(criticalMethods, methodToLevelMap, methodCodeMap, onExplanationReady)
 
         return Pair(res, methodToLevelMap)
     }
@@ -157,5 +163,130 @@ class DefaultCriticalMethodGenerator : CriticalMethodGenerator {
 
     private fun filterZeros(map: Map<String, Number>): Map<String, Number> {
         return map.filterValues { it.toDouble() != 0.0 }
+    }
+
+    private fun createPlaceholderExplanation(metricLabel: String, metricValue: Number, criticalityLevel: String): String {
+        var note = "<b>Note:</b> <i>$metricLabel</i> metric is used to assess security criticality, and its score is <i>$metricValue</i>."
+        
+        if (criticalityLevel != "NA") {
+            note += " This method falls under the <i>$criticalityLevel</i> level."
+        }
+
+        val html = """
+        <b>Overview</b><br/>
+        <i>Generating explanation...</i>
+        <br/><br/>
+        <b>Recommended Practices</b>
+        <i>Generating recommendations...</i>
+        <br/>
+        <b>Common Pitfalls</b>
+        <i>Generating pitfalls...</i>
+        <br/>
+        <span style="color:gray;">
+            $note
+        </span>
+    """.trimIndent()
+
+        return XmlStringUtil.wrapInHtml(html)
+    }
+
+    private fun generateExplanationsInBackground(
+        criticalMethods: Map<String, Number>,
+        methodToLevelMap: Map<String, String>,
+        methodCodeMap: Map<String, String?>,
+        onExplanationReady: (signature: String, explanation: String) -> Unit
+    ) {
+        val metric = MetricState.getInstance().getSelected()
+        //val methodsToProcess = criticalMethods.filterKeys { !filter(it) }
+
+        val methodsToProcess = criticalMethods
+        val totalMethods = methodsToProcess.size
+        var completedMethods = 0
+        
+        // Process explanations in background thread
+        Thread {
+            methodsToProcess.forEach { (metSig, metricValue) ->
+                try {
+                    // Use pre-computed method code to avoid PSI access from background thread
+                    val methodCode = methodCodeMap[metSig] ?: "Method code not available"
+                    val exp = LlmClient.sendRequest(metSig, metric.label, metricValue, methodCode)
+                    val overview = getOverview(exp)
+                    val recommendedPractices = getRecommendedPractises(exp)
+                    val commonPitfall = getCommonPitfall(exp)
+                    val fullExplanation = htmlTooltip(
+                        overview, 
+                        recommendedPractices, 
+                        commonPitfall, 
+                        metric.label, 
+                        metricValue, 
+                        methodToLevelMap.getOrDefault(metSig, "NA")
+                    )
+                    
+                    completedMethods++
+                    
+                    // Notify on UI thread
+                    com.intellij.openapi.application.ApplicationManager.getApplication().invokeLater {
+                        onExplanationReady(metSig, fullExplanation)
+                        
+                        // Show progress notification at 25%, 50%, 75%, and 100% completion
+                        val progressPercentage = (completedMethods * 100) / totalMethods
+                        val shouldNotify = when {
+                            completedMethods == 1 -> true // First method
+                            progressPercentage >= 25 && (completedMethods - 1) * 100 / totalMethods < 25 -> true
+                            progressPercentage >= 50 && (completedMethods - 1) * 100 / totalMethods < 50 -> true
+                            progressPercentage >= 75 && (completedMethods - 1) * 100 / totalMethods < 75 -> true
+                            completedMethods == totalMethods -> true // Last method
+                            else -> false
+                        }
+                        
+                        if (shouldNotify) {
+                            val progressMessage = "Generated explanations for $completedMethods/$totalMethods methods ($progressPercentage%)"
+                            com.intellij.notification.Notifications.Bus.notify(
+                                com.intellij.notification.Notification(
+                                    "SecurityMarkerNotifications",
+                                    "",
+                                    progressMessage,
+                                    com.intellij.notification.NotificationType.INFORMATION
+                                )
+                            )
+                        }
+                    }
+                } catch (e: Exception) {
+                    println("Failed to generate explanation for $metSig: ${e.message}")
+                    completedMethods++
+                    
+                    // Create error explanation
+                    val errorExplanation = createErrorExplanation(metric.label, metricValue, methodToLevelMap.getOrDefault(metSig, "NA"), e.message ?: "Unknown error")
+                    com.intellij.openapi.application.ApplicationManager.getApplication().invokeLater {
+                        onExplanationReady(metSig, errorExplanation)
+                    }
+                }
+            }
+        }.start()
+    }
+
+    private fun createErrorExplanation(metricLabel: String, metricValue: Number, criticalityLevel: String, errorMessage: String): String {
+        var note = "<b>Note:</b> <i>$metricLabel</i> metric is used to assess security criticality, and its score is <i>$metricValue</i>."
+        
+        if (criticalityLevel != "NA") {
+            note += " This method falls under the <i>$criticalityLevel</i> level."
+        }
+
+        val html = """
+        <b>Overview</b><br/>
+        <i style="color: red;">Failed to generate explanation: $errorMessage</i>
+        <br/><br/>
+        <b>Recommended Practices</b>
+        <i>Unable to generate recommendations due to error</i>
+        <br/>
+        <b>Common Pitfalls</b>
+        <i>Unable to generate pitfalls due to error</i>
+        <br/>
+        <span style="color:gray;">
+            $note
+        </span>
+    """.trimIndent()
+
+        return XmlStringUtil.wrapInHtml(html)
     }
 }

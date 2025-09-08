@@ -2,7 +2,6 @@ package de.fraunhofer.iem.llm
 
 import com.fasterxml.jackson.module.kotlin.jacksonObjectMapper
 import com.fasterxml.jackson.module.kotlin.readValue
-import com.intellij.openapi.project.Project
 import com.openai.client.okhttp.OpenAIOkHttpClient
 import com.openai.models.chat.completions.ChatCompletion
 import com.openai.models.chat.completions.ChatCompletionCreateParams
@@ -11,7 +10,7 @@ object LlmClient {
     private val mapper = jacksonObjectMapper()
     private val explanationCache: MutableMap<String, String> = mutableMapOf()
 
-    fun sendRequest(project: Project, methodSig: String, metricName: String, metricValue: Number): String {
+    fun sendRequest(methodSig: String, metricName: String, metricValue: Number, methodCode: String): String {
         if (explanationCache.containsKey(methodSig)) {
             return explanationCache[methodSig]!!
         }
@@ -26,7 +25,7 @@ object LlmClient {
 
         val params = ChatCompletionCreateParams.builder()
             .addSystemMessage(PromptTemplate.getSystemPrompt())
-            .addUserMessage(PromptTemplate.buildUserPrompt(project, methodSig, metricName, metricValue))
+            .addUserMessage(PromptTemplate.buildUserPrompt(metricName, metricValue, methodCode))
             .model(llmConfig.model)
             .temperature(llmConfig.temperature.toDouble())
             .build()

@@ -78,7 +78,14 @@ class SignatureService(private val project: Project) {
     private fun warmUpAsync(isRecompute: Boolean) {
         ReadAction
             .nonBlocking<Pair<Map<String, String>, Map<String, String>>> {
-                generator.generate(project) // <-- your method runs here (potentially heavy)
+                // Use incremental generation for better UX
+                generator.generate(project) { signature, explanation ->
+                    // Update cache immediately when explanation is ready
+                    cache[signature] = explanation
+                    
+                    // Trigger UI refresh for this specific method
+                    refreshAnnotationsForSignature(signature)
+                }
             }
             .inSmartMode(project)
             .expireWith(project)
@@ -94,7 +101,7 @@ class SignatureService(private val project: Project) {
                     computingWord = "re-computing"
                 }
 
-                val message = "Completed $computingWord critical methods using ${MetricState.getInstance().getSelected().label}"
+                val message = "Started $computingWord critical methods using ${MetricState.getInstance().getSelected().label}. Explanations will appear as they are generated."
                 ApplicationManager.getApplication().executeOnPooledThread {
                     Notifications.Bus.notify(
                         Notification(
@@ -120,5 +127,21 @@ class SignatureService(private val project: Project) {
                 // DaemonCodeAnalyzer.getInstance(project).restart()
             }
             .submit(AppExecutorUtil.getAppExecutorService())
+    }
+
+    private fun refreshAnnotationsForSignature(signature: String) {
+        // Trigger a focused refresh for the specific signature
+        // This will cause the annotator to re-run for methods matching this signature
+        ApplicationManager.getApplication().invokeLater {
+            val fem = FileEditorManager.getInstance(project)
+            val psiManager = PsiManager.getInstance(project)
+            for (vf in fem.openFiles) {
+                psiManager.findFile(vf)?.let { psi ->
+                    if (psi.isValid) {
+                        DaemonCodeAnalyzer.getInstance(project).restart(psi)
+                    }
+                }
+            }
+        }
     }
 }
