@@ -1,10 +1,12 @@
 package de.fraunhofer.iem.metricsUtil
 
 import com.intellij.openapi.components.Service
+import com.intellij.openapi.diagnostic.Logger
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.roots.ProjectRootManager
 import com.intellij.xml.util.XmlStringUtil
 import de.fraunhofer.iem.llm.LlmClient
+import de.fraunhofer.iem.llm.Pricing
 import org.yaml.snakeyaml.Yaml
 import kotlin.system.measureTimeMillis
 
@@ -12,15 +14,18 @@ interface CriticalMethodGenerator {
     /** Return map: signature -> explanation and signature -> explanation */
     /** Generate explanations incrementally with callback for updates */
     fun generate(
-        project: Project, 
+        project: Project,
         onExplanationReady: (signature: String, explanation: String) -> Unit
     ): Pair<Map<String, String>, Map<String, String>>
 }
 
+
 @Service(Service.Level.PROJECT)
 class DefaultCriticalMethodGenerator : CriticalMethodGenerator {
+    private val log = Logger.getInstance(DefaultCriticalMethodGenerator::class.java)
+
     override fun generate(
-        project: Project, 
+        project: Project,
         onExplanationReady: (signature: String, explanation: String) -> Unit
     ): Pair<Map<String, String>, Map<String, String>> {
         val metric = MetricState.getInstance().getSelected()
@@ -167,7 +172,7 @@ class DefaultCriticalMethodGenerator : CriticalMethodGenerator {
 
     private fun createPlaceholderExplanation(metricLabel: String, metricValue: Number, criticalityLevel: String): String {
         var note = "<b>Note:</b> <i>$metricLabel</i> metric is used to assess security criticality, and its score is <i>$metricValue</i>."
-        
+
         if (criticalityLevel != "NA") {
             note += " This method falls under the <i>$criticalityLevel</i> level."
         }
@@ -197,12 +202,12 @@ class DefaultCriticalMethodGenerator : CriticalMethodGenerator {
         onExplanationReady: (signature: String, explanation: String) -> Unit
     ) {
         val metric = MetricState.getInstance().getSelected()
-        //val methodsToProcess = criticalMethods.filterKeys { !filter(it) }
+        val methodsToProcess = criticalMethods.filterKeys { !filter(it) }
 
-        val methodsToProcess = criticalMethods
+        //val methodsToProcess = criticalMethods
         val totalMethods = methodsToProcess.size
         var completedMethods = 0
-        
+
         // Process explanations in background thread
         Thread {
             methodsToProcess.forEach { (metSig, metricValue) ->
@@ -214,20 +219,20 @@ class DefaultCriticalMethodGenerator : CriticalMethodGenerator {
                     val recommendedPractices = getRecommendedPractises(exp)
                     val commonPitfall = getCommonPitfall(exp)
                     val fullExplanation = htmlTooltip(
-                        overview, 
-                        recommendedPractices, 
-                        commonPitfall, 
-                        metric.label, 
-                        metricValue, 
+                        overview,
+                        recommendedPractices,
+                        commonPitfall,
+                        metric.label,
+                        metricValue,
                         methodToLevelMap.getOrDefault(metSig, "NA")
                     )
-                    
+
                     completedMethods++
-                    
+
                     // Notify on UI thread
                     com.intellij.openapi.application.ApplicationManager.getApplication().invokeLater {
                         onExplanationReady(metSig, fullExplanation)
-                        
+
                         // Show progress notification at 25%, 50%, 75%, and 100% completion
                         val progressPercentage = (completedMethods * 100) / totalMethods
                         val shouldNotify = when {
@@ -238,7 +243,7 @@ class DefaultCriticalMethodGenerator : CriticalMethodGenerator {
                             completedMethods == totalMethods -> true // Last method
                             else -> false
                         }
-                        
+
                         if (shouldNotify) {
                             val progressMessage = "Generated explanations for $completedMethods/$totalMethods methods ($progressPercentage%)"
                             com.intellij.notification.Notifications.Bus.notify(
@@ -254,7 +259,7 @@ class DefaultCriticalMethodGenerator : CriticalMethodGenerator {
                 } catch (e: Exception) {
                     println("Failed to generate explanation for $metSig: ${e.message}")
                     completedMethods++
-                    
+
                     // Create error explanation
                     val errorExplanation = createErrorExplanation(metric.label, metricValue, methodToLevelMap.getOrDefault(metSig, "NA"), e.message ?: "Unknown error")
                     com.intellij.openapi.application.ApplicationManager.getApplication().invokeLater {
@@ -262,12 +267,19 @@ class DefaultCriticalMethodGenerator : CriticalMethodGenerator {
                     }
                 }
             }
+
+            log.warn("\uD83D\uDD34Total input tokens = " + Pricing.totalInputTokens)
+            log.warn("\uD83D\uDD34Total output tokens = " + Pricing.totalOutputTokens)
+            log.warn("\uD83D\uDD34Total request sent = " + Pricing.totalRequestSent)
+            log.warn("\uD83D\uDD34Total cost = " + Pricing.totalCost)
+            log.warn("\uD83D\uDD34Total discounted cost = " + Pricing.discountedTotalCost)
+            log.warn("\uD83D\uDD34Total number of methods for explanation generation = " + methodsToProcess.size)
         }.start()
     }
 
     private fun createErrorExplanation(metricLabel: String, metricValue: Number, criticalityLevel: String, errorMessage: String): String {
         var note = "<b>Note:</b> <i>$metricLabel</i> metric is used to assess security criticality, and its score is <i>$metricValue</i>."
-        
+
         if (criticalityLevel != "NA") {
             note += " This method falls under the <i>$criticalityLevel</i> level."
         }

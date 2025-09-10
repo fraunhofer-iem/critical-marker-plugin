@@ -32,6 +32,10 @@ object LlmClient {
 
         val chatCompletion: ChatCompletion = client.chat().completions().create(params)
 
+        if (chatCompletion.usage().isPresent) {
+            Pricing.recordCost(chatCompletion)
+        }
+
         explanationCache[methodSig] = chatCompletion.choices().first().message()._content().toString()
 
         return explanationCache.getOrDefault(methodSig, "NA")
