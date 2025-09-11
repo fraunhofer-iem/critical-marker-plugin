@@ -11,13 +11,11 @@ import java.util.concurrent.TimeUnit
 import java.util.concurrent.atomic.AtomicBoolean
 
 import com.intellij.codeInsight.daemon.DaemonCodeAnalyzer
-import com.intellij.notification.Notification
-import com.intellij.notification.NotificationType
-import com.intellij.notification.Notifications
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.fileEditor.FileEditorManager
 import com.intellij.psi.PsiManager
 import com.intellij.util.concurrency.EdtScheduledExecutorService
+import de.fraunhofer.iem.Notification
 
 @Service(Service.Level.PROJECT)
 class SignatureService(private val project: Project) {
@@ -102,16 +100,7 @@ class SignatureService(private val project: Project) {
                 }
 
                 val message = "Started $computingWord critical methods using ${MetricState.getInstance().getSelected().label}. Explanations will appear as they are generated."
-                ApplicationManager.getApplication().executeOnPooledThread {
-                    Notifications.Bus.notify(
-                        Notification(
-                            "SecurityMarkerNotifications",
-                            "",
-                            message,
-                            NotificationType.INFORMATION
-                        )
-                    )
-                }
+                Notification.notifyInfo(project, message)
 
                 // 🔄 Re-run LineMarkerProviders for open files so getLineMarkerInfo(...) runs again
                 val fem = FileEditorManager.getInstance(project)
