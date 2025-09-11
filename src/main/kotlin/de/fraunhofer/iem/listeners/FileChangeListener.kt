@@ -1,12 +1,10 @@
 package de.fraunhofer.iem.listeners
 
 import com.intellij.openapi.application.ApplicationManager
-import com.intellij.openapi.components.Service
 import com.intellij.openapi.diagnostic.Logger
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.project.ProjectManager
 import com.intellij.openapi.roots.ProjectRootManager
-import com.intellij.openapi.vfs.VirtualFileManager
 import com.intellij.openapi.vfs.newvfs.BulkFileListener
 import com.intellij.openapi.vfs.newvfs.events.VFileEvent
 import com.intellij.util.concurrency.AppExecutorUtil
@@ -19,7 +17,6 @@ import java.util.concurrent.atomic.AtomicBoolean
  * Listens for file changes and automatically triggers refresh of security metrics
  * when source files are saved.
  */
-@Service(Service.Level.APP)
 class FileChangeListener : BulkFileListener {
     
     private val log = Logger.getInstance(FileChangeListener::class.java)
@@ -28,10 +25,7 @@ class FileChangeListener : BulkFileListener {
     private val projectsToRefresh = mutableSetOf<Project>()
     
     init {
-        // Register this listener with the VirtualFileManager
-        ApplicationManager.getApplication().messageBus.connect()
-            .subscribe(VirtualFileManager.VFS_CHANGES, this)
-        log.info("FileChangeListener created and registered")
+        log.info("FileChangeListener created")
     }
     
     override fun before(events: MutableList<out VFileEvent>) {

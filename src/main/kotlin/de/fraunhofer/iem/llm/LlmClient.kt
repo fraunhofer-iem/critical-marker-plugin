@@ -2,18 +2,33 @@ package de.fraunhofer.iem.llm
 
 import com.fasterxml.jackson.module.kotlin.jacksonObjectMapper
 import com.fasterxml.jackson.module.kotlin.readValue
+import com.intellij.openapi.project.ProjectManager
 import com.openai.client.okhttp.OpenAIOkHttpClient
 import com.openai.models.chat.completions.ChatCompletion
 import com.openai.models.chat.completions.ChatCompletionCreateParams
+import de.fraunhofer.iem.cache.PersistentCacheService
 
 object LlmClient {
     private val mapper = jacksonObjectMapper()
-    private val explanationCache: MutableMap<String, String> = mutableMapOf()
 
     fun sendRequest(methodSig: String, metricName: String, metricValue: Number, methodCode: String): String {
         val cacheKey = "$methodSig|$metricName|$metricValue"
-        if (explanationCache.containsKey(cacheKey)) {
-            return explanationCache[cacheKey]!!
+        
+        // Try to get from persistent cache first
+        val project = ProjectManager.getInstance().openProjects.firstOrNull()
+        println("DEBUG: Found ${ProjectManager.getInstance().openProjects.size} open projects")
+        if (project != null) {
+            println("DEBUG: Using project: ${project.name}")
+            val cacheService = project.getService(PersistentCacheService::class.java)
+            val cachedResponse = cacheService.getLlmResponse(cacheKey)
+            if (cachedResponse != null) {
+                println("DEBUG: Found cached LLM response for key: $cacheKey")
+                return cachedResponse
+            } else {
+                println("DEBUG: No cached LLM response found for key: $cacheKey")
+            }
+        } else {
+            println("DEBUG: No open project found")
         }
 
         val llmConfig = LlmConfig()
@@ -37,9 +52,18 @@ object LlmClient {
             Pricing.recordCost(chatCompletion)
         }
 
-        explanationCache[cacheKey] = chatCompletion.choices().first().message()._content().toString()
+        val response = chatCompletion.choices().first().message()._content().toString()
+        
+        // Store in persistent cache
+        if (project != null) {
+            val cacheService = project.getService(PersistentCacheService::class.java)
+            cacheService.storeLlmResponse(cacheKey, response)
+            println("DEBUG: Stored LLM response in cache for key: $cacheKey")
+        } else {
+            println("DEBUG: No project available to store cache")
+        }
 
-        return explanationCache.getOrDefault(cacheKey, "NA")
+        return response
     }
 
 

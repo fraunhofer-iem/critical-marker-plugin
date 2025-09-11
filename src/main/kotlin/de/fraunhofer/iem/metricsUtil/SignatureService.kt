@@ -16,12 +16,12 @@ import com.intellij.openapi.fileEditor.FileEditorManager
 import com.intellij.psi.PsiManager
 import com.intellij.util.concurrency.EdtScheduledExecutorService
 import de.fraunhofer.iem.Notification
+import de.fraunhofer.iem.cache.PersistentCacheService
 
 @Service(Service.Level.PROJECT)
 class SignatureService(private val project: Project) {
     private val log = Logger.getInstance(SignatureService::class.java)
-    private val cache = ConcurrentHashMap<String, String>()
-    private val levelsCache = ConcurrentHashMap<String, String>()
+    private val persistentCache = project.getService(PersistentCacheService::class.java)
 
 
     // Pull the generator (your impl) from DI
@@ -41,16 +41,28 @@ class SignatureService(private val project: Project) {
      * Your LineMarkerProvider will be invoked again after recompute finishes due to the daemon restart.
      */
     fun explanationFor(signature: String): String? {
-        cache[signature]?.let { return it }
-        return null
+        return persistentCache.getExplanation(signature)
     }
 
     fun levelFor(signature: String): String? {
-        levelsCache[signature]?.let { return it }
-        return null
+        return persistentCache.getLevel(signature)
     }
 
-    fun allSignatures(): Set<String> = cache.keys
+    fun allSignatures(): Set<String> = persistentCache.getAllSignatures()
+    
+    /**
+     * Clear all caches (for testing/debugging)
+     */
+    fun clearAllCaches() {
+        persistentCache.clearAllCaches()
+    }
+    
+    /**
+     * Check if cache is valid for current project state
+     */
+    fun isCacheValid(): Boolean {
+        return persistentCache.isCacheValid()
+    }
 
     private fun warmUpAsync(isRecompute: Boolean) {
         val bgTask = project.getService(CriticalMethodGenerator::class.java).isBackgroundTaskRunning()
@@ -74,8 +86,8 @@ class SignatureService(private val project: Project) {
             .nonBlocking<Pair<Map<String, String>, Map<String, String>>> {
                 // Use incremental generation for better UX
                 generator.generate(project) { signature, explanation ->
-                    // Update cache immediately when explanation is ready
-                    cache[signature] = explanation
+                    // Update persistent cache immediately when explanation is ready
+                    persistentCache.storeExplanation(signature, explanation)
                     
                     // Trigger UI refresh for this specific method
                     refreshAnnotationsForSignature(signature)
@@ -84,10 +96,9 @@ class SignatureService(private val project: Project) {
             .inSmartMode(project)
             .expireWith(project)
             .finishOnUiThread(ModalityState.nonModal()) { result ->
-                cache.clear()
-                cache.putAll(result.first)
-                levelsCache.clear()
-                levelsCache.putAll(result.second)
+                // Store all results in persistent cache
+                persistentCache.storeExplanations(result.first)
+                persistentCache.storeLevels(result.second)
 
                 // 🔄 Re-run LineMarkerProviders for open files so getLineMarkerInfo(...) runs again
                 val fem = FileEditorManager.getInstance(project)

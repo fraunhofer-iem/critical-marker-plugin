@@ -53,9 +53,9 @@
         <codeInsight.lineMarkerProvider language="JAVA" implementationClass="de.fraunhofer.iem.SecurityMarker"/>
         <projectService serviceImplementation="de.fraunhofer.iem.metricsUtil.SignatureService"/>
         <applicationService serviceImplementation="de.fraunhofer.iem.Settings"/>
-        <applicationService serviceImplementation="de.fraunhofer.iem.listeners.FileChangeListener"/>
         <projectService serviceInterface="de.fraunhofer.iem.metricsUtil.CriticalMethodGenerator" serviceImplementation="de.fraunhofer.iem.metricsUtil.DefaultCriticalMethodGenerator"/>
         <projectService serviceImplementation="de.fraunhofer.iem.metricsUtil.MethodSignatureCacheService"/>
+        <projectService serviceImplementation="de.fraunhofer.iem.cache.PersistentCacheService"/>
         <notificationGroup id="SecurityMarkerNotifications"
                            displayType="BALLOON"
                            isLogByDefault="true"
