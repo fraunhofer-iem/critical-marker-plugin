@@ -11,6 +11,7 @@ import de.fraunhofer.iem.Notification
 import de.fraunhofer.iem.llm.LlmClient
 import de.fraunhofer.iem.llm.Pricing
 import org.yaml.snakeyaml.Yaml
+import java.util.concurrent.atomic.AtomicBoolean
 import kotlin.system.measureTimeMillis
 
 interface CriticalMethodGenerator {
@@ -20,17 +21,34 @@ interface CriticalMethodGenerator {
         project: Project,
         onExplanationReady: (signature: String, explanation: String) -> Unit
     ): Pair<Map<String, String>, Map<String, String>>
+
+    fun isBackgroundTaskRunning(): AtomicBoolean
 }
 
 
 @Service(Service.Level.PROJECT)
 class DefaultCriticalMethodGenerator : CriticalMethodGenerator {
     private val log = Logger.getInstance(DefaultCriticalMethodGenerator::class.java)
+    private val first: MutableMap<String, String> = mutableMapOf()
+    private val second: MutableMap<String, String> = mutableMapOf()
+    private val res: Pair<Map<String, String>, Map<String, String>> = Pair(first, second)
+    
+    // Prevents multiple background tasks from running simultaneously
+    val backgroundTaskRunning = AtomicBoolean(false)
+
+    override fun isBackgroundTaskRunning(): AtomicBoolean {
+        return backgroundTaskRunning
+    }
 
     override fun generate(
         project: Project,
         onExplanationReady: (signature: String, explanation: String) -> Unit
     ): Pair<Map<String, String>, Map<String, String>> {
+        if (!backgroundTaskRunning.compareAndSet(false, false)) {
+            log.info("Background task already running, skipping duplicate request")
+            return res
+        }
+
         val metric = MetricState.getInstance().getSelected()
 
         val criticalMethods = mutableMapOf<String, Number>()
@@ -49,7 +67,7 @@ class DefaultCriticalMethodGenerator : CriticalMethodGenerator {
             listOf("LOW", "MEDIUM", "HIGH")
         )
 
-        println("----> Completed generating metrics in $timeTaken milliseconds")
+        Notification.notifyInfo(project, "Completed generating metrics in $timeTaken milliseconds")
 
         // Pre-compute method code within read action to avoid threading issues
         val methodCodeMap = mutableMapOf<String, String?>()
@@ -57,6 +75,11 @@ class DefaultCriticalMethodGenerator : CriticalMethodGenerator {
             criticalMethods.keys.forEach { signature ->
                 methodCodeMap[signature] = de.fraunhofer.iem.llm.PromptTemplate.getMethodCode(project, signature)
             }
+        }
+
+        if (!backgroundTaskRunning.compareAndSet(false, true)) {
+            log.info("Background task already running, skipping duplicate request")
+            return res
         }
 
         // Create initial explanations with placeholders
@@ -69,7 +92,9 @@ class DefaultCriticalMethodGenerator : CriticalMethodGenerator {
         // Start background explanation generation with pre-computed method code
         generateExplanationsInBackground(project, criticalMethods, methodToLevelMap, methodCodeMap, onExplanationReady)
 
-        return Pair(res, methodToLevelMap)
+        first.putAll(res)
+        second.putAll(methodToLevelMap)
+        return this.res
     }
 
     private fun htmlTooltip(
@@ -279,13 +304,23 @@ class DefaultCriticalMethodGenerator : CriticalMethodGenerator {
             }
 
             override fun onSuccess() {
-                Notification.notifyInfo(project, "Successfully completed explanation generation for all methods")
-                log.info("Successfully completed explanation generation for all methods")
+                try {
+                    Notification.notifyInfo(project, "Successfully completed explanation generation for all methods")
+                    log.info("Successfully completed explanation generation for all methods")
+                } finally {
+                    // Always reset the flag when the task completes
+                    backgroundTaskRunning.set(false)
+                }
             }
 
             override fun onCancel() {
-                Notification.notifyInfo(project, "Explanation generation was cancelled by user")
-                log.warn("Explanation generation was cancelled by user")
+                try {
+                    Notification.notifyInfo(project, "Explanation generation was cancelled by user")
+                    log.warn("Explanation generation was cancelled by user")
+                } finally {
+                    // Always reset the flag when the task is cancelled
+                    backgroundTaskRunning.set(false)
+                }
             }
         }
 

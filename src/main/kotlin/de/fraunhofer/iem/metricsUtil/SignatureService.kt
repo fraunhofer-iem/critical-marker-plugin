@@ -74,6 +74,23 @@ class SignatureService(private val project: Project) {
     }
 
     private fun warmUpAsync(isRecompute: Boolean) {
+        val bgTask = project.getService(CriticalMethodGenerator::class.java).isBackgroundTaskRunning()
+
+        // Prevent multiple background tasks from running simultaneously
+        if (!bgTask.compareAndSet(false, false)) {
+            log.info("Background task already running, skipping duplicate request")
+            return
+        }
+
+        var computingWord = "computing"
+
+        if (isRecompute) {
+            computingWord = "re-computing"
+        }
+
+        val message = "Started $computingWord critical methods using ${MetricState.getInstance().getSelected().label}. Explanations will appear as they are generated."
+        Notification.notifyInfo(project, message)
+
         ReadAction
             .nonBlocking<Pair<Map<String, String>, Map<String, String>>> {
                 // Use incremental generation for better UX
@@ -92,15 +109,6 @@ class SignatureService(private val project: Project) {
                 cache.putAll(result.first)
                 levelsCache.clear()
                 levelsCache.putAll(result.second)
-
-                var computingWord = "computing"
-
-                if (isRecompute) {
-                    computingWord = "re-computing"
-                }
-
-                val message = "Started $computingWord critical methods using ${MetricState.getInstance().getSelected().label}. Explanations will appear as they are generated."
-                Notification.notifyInfo(project, message)
 
                 // 🔄 Re-run LineMarkerProviders for open files so getLineMarkerInfo(...) runs again
                 val fem = FileEditorManager.getInstance(project)
