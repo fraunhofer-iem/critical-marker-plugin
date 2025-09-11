@@ -35,6 +35,12 @@
                 class="de.fraunhofer.iem.actions.ShowLowLevelExplanationsAction"
                 text="Show Low Level Explanations"
                 description="Toggle display of explanations for Low level methods"/>
+        
+        <!-- Toggle Auto Refresh action -->
+        <action id="de.fraunhofer.iem.ToggleAutoRefresh"
+                class="de.fraunhofer.iem.actions.ToggleAutoRefreshAction"
+                text="Auto Refresh on Save"
+                description="Toggle automatic refresh when files are saved"/>
     </actions>
 
 
@@ -42,6 +48,7 @@
         <codeInsight.lineMarkerProvider language="JAVA" implementationClass="de.fraunhofer.iem.SecurityMarker"/>
         <projectService serviceImplementation="de.fraunhofer.iem.metricsUtil.SignatureService"/>
         <applicationService serviceImplementation="de.fraunhofer.iem.Settings"/>
+        <applicationService serviceImplementation="de.fraunhofer.iem.listeners.FileChangeListener"/>
         <projectService serviceInterface="de.fraunhofer.iem.metricsUtil.CriticalMethodGenerator" serviceImplementation="de.fraunhofer.iem.metricsUtil.DefaultCriticalMethodGenerator"/>
         <projectService serviceImplementation="de.fraunhofer.iem.metricsUtil.MethodSignatureCacheService"/>
         <notificationGroup id="SecurityMarkerNotifications"
@@ -52,5 +59,8 @@
         <!-- Annotators must be registered per language -->
         <annotator language="JAVA"   implementationClass="de.fraunhofer.iem.annotators.SecurityMethodAnnotator"/>
         <annotator language="kotlin" implementationClass="de.fraunhofer.iem.annotators.SecurityMethodAnnotator"/>
+        
+        <!-- Startup activity to initialize FileChangeListener -->
+        <postStartupActivity implementation="de.fraunhofer.iem.FileChangeListenerStartup"/>
     </extensions>
 </idea-plugin>

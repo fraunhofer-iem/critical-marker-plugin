@@ -14,7 +14,8 @@ class Settings : PersistentStateComponent<Settings.State> {
     private val log = Logger.getInstance(Settings::class.java)
 
     data class State(
-        var showLowLevelExplanations: Boolean = false
+        var showLowLevelExplanations: Boolean = false,
+        var autoRefreshEnabled: Boolean = true
     )
 
     private var state = State()
@@ -24,6 +25,9 @@ class Settings : PersistentStateComponent<Settings.State> {
 
     fun shouldShowLowLevelExplanations(): Boolean = state.showLowLevelExplanations
     fun setShowLowLevelExplanations(show: Boolean) { state.showLowLevelExplanations = show }
+    
+    fun isAutoRefreshEnabled(): Boolean = state.autoRefreshEnabled
+    fun setAutoRefreshEnabled(enabled: Boolean) { state.autoRefreshEnabled = enabled }
 
     companion object {
         fun getInstance(): Settings = ApplicationManager.getApplication().getService(Settings::class.java)
