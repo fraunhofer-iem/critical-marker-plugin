@@ -1,5 +1,6 @@
 package de.fraunhofer.iem.metricsUtil
 
+import com.intellij.openapi.application.ReadAction
 import com.intellij.openapi.components.Service
 import com.intellij.openapi.diagnostic.Logger
 import com.intellij.openapi.progress.ProgressIndicator
@@ -44,10 +45,7 @@ class DefaultCriticalMethodGenerator : CriticalMethodGenerator {
         project: Project,
         onExplanationReady: (signature: String, explanation: String) -> Unit
     ): Pair<Map<String, String>, Map<String, String>> {
-        if (!backgroundTaskRunning.compareAndSet(false, false)) {
-            log.info("Background task already running, skipping duplicate request")
-            return res
-        }
+
 
         val metric = MetricState.getInstance().getSelected()
 
@@ -71,11 +69,13 @@ class DefaultCriticalMethodGenerator : CriticalMethodGenerator {
 
         // Pre-compute method code within read action to avoid threading issues
         val methodCodeMap = mutableMapOf<String, String?>()
-        com.intellij.openapi.application.ReadAction.run<RuntimeException> {
+        ReadAction.nonBlocking<String> {
             criticalMethods.keys.forEach { signature ->
                 methodCodeMap[signature] = de.fraunhofer.iem.llm.PromptTemplate.getMethodCode(project, signature)
             }
-        }
+
+            "Success"
+        }.inSmartMode(project).executeSynchronously()
 
         if (!backgroundTaskRunning.compareAndSet(false, true)) {
             log.info("Background task already running, skipping duplicate request")
@@ -166,25 +166,25 @@ class DefaultCriticalMethodGenerator : CriticalMethodGenerator {
 
     //TODO: This is for testing purposes only. We need to remove this and make sure to run explanation generation in the background so it runs anmd display incrementally
     private fun filter(sig: String): Boolean {
-        if (sig.contains("getNrOfSpecialties"))
+        if (sig.contains("org.springframework.samples.petclinic.vet.Vet#getNrOfSpecialties"))
             return false
 
-        if (sig.contains("findOwner"))
+        if (sig.contains("org.springframework.samples.petclinic.owner.OwnerController#findOwner"))
             return false
 
-        if (sig.contains("main"))
+        if (sig.contains("org.springframework.samples.petclinic.PetClinicApplication#main"))
             return false
 
-        if (sig.contains("showOwner"))
+        if (sig.contains("org.springframework.samples.petclinic.owner.OwnerController#showOwner"))
             return false
 
-        if (sig.contains("processCreationForm"))
+        if (sig.contains("org.springframework.samples.petclinic.owner.OwnerController#processCreationForm"))
             return false
 
-        if (sig.contains("processFindForm"))
+        if (sig.contains("org.springframework.samples.petclinic.owner.OwnerController#processFindForm"))
             return false
 
-        if (sig.contains("initUpdateOwnerForm"))
+        if (sig.contains("org.springframework.samples.petclinic.owner.OwnerController#initUpdateOwnerForm"))
             return false
 
         return true
