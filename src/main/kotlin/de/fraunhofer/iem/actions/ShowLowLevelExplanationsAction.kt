@@ -1,7 +1,7 @@
 package de.fraunhofer.iem.actions
 
 import com.intellij.codeInsight.daemon.DaemonCodeAnalyzer
-import com.intellij.openapi.actionSystem.AnAction
+import com.intellij.openapi.actionSystem.ActionUpdateThread
 import com.intellij.openapi.actionSystem.AnActionEvent
 import com.intellij.openapi.actionSystem.ToggleAction
 import com.intellij.openapi.fileEditor.FileEditorManager
@@ -13,6 +13,10 @@ import de.fraunhofer.iem.metricsUtil.SignatureService
 class ShowLowLevelExplanationsAction : ToggleAction("Show Low Level Explanations") {
     override fun isSelected(e: AnActionEvent): Boolean {
         return Settings.getInstance().shouldShowLowLevelExplanations()
+    }
+
+    override fun getActionUpdateThread(): ActionUpdateThread {
+        return ActionUpdateThread.EDT
     }
 
     override fun setSelected(e: AnActionEvent, state: Boolean) {
