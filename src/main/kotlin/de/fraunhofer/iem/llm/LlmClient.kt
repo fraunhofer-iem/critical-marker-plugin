@@ -11,8 +11,9 @@ object LlmClient {
     private val explanationCache: MutableMap<String, String> = mutableMapOf()
 
     fun sendRequest(methodSig: String, metricName: String, metricValue: Number, methodCode: String): String {
-        if (explanationCache.containsKey(methodSig)) {
-            return explanationCache[methodSig]!!
+        val cacheKey = "$methodSig|$metricName|$metricValue"
+        if (explanationCache.containsKey(cacheKey)) {
+            return explanationCache[cacheKey]!!
         }
 
         val llmConfig = LlmConfig()
@@ -36,9 +37,9 @@ object LlmClient {
             Pricing.recordCost(chatCompletion)
         }
 
-        explanationCache[methodSig] = chatCompletion.choices().first().message()._content().toString()
+        explanationCache[cacheKey] = chatCompletion.choices().first().message()._content().toString()
 
-        return explanationCache.getOrDefault(methodSig, "NA")
+        return explanationCache.getOrDefault(cacheKey, "NA")
     }
 
 
