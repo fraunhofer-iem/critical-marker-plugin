@@ -23,8 +23,6 @@ class SignatureService(private val project: Project) {
     private val cache = ConcurrentHashMap<String, String>()
     private val levelsCache = ConcurrentHashMap<String, String>()
 
-    // Prevents scheduling many recomputes when lots of misses happen back-to-back
-    private val recomputeQueued = AtomicBoolean(false)
 
     // Pull the generator (your impl) from DI
     private val generator: CriticalMethodGenerator =
@@ -44,7 +42,6 @@ class SignatureService(private val project: Project) {
      */
     fun explanationFor(signature: String): String? {
         cache[signature]?.let { return it }
-        queueDebouncedRecompute()
         return null
     }
 
@@ -54,24 +51,6 @@ class SignatureService(private val project: Project) {
     }
 
     fun allSignatures(): Set<String> = cache.keys
-
-    // ---- internals ----
-
-    private fun queueDebouncedRecompute() {
-        if (recomputeQueued.compareAndSet(false, true)) {
-            // Debounce a little so a burst of misses becomes a single recompute
-            EdtScheduledExecutorService.getInstance().schedule({
-                try {
-                    // This triggers a single background recompute
-                    warmUpAsync(isRecompute = false)
-                } finally {
-                    // allow future recomputes after this one is scheduled
-                    recomputeQueued.set(false)
-                }
-            },
-                30, TimeUnit.SECONDS)
-        }
-    }
 
     private fun warmUpAsync(isRecompute: Boolean) {
         val bgTask = project.getService(CriticalMethodGenerator::class.java).isBackgroundTaskRunning()
