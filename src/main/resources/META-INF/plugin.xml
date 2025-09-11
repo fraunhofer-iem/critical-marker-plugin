@@ -21,6 +21,7 @@
                class="de.fraunhofer.iem.actions.SecurityMarkerActionGroup">
             <add-to-group group-id="MainMenu" anchor="last"/>
             <add-to-group group-id="ToolsMenu" anchor="last"/>
+            <add-to-group group-id="EditorPopupMenu" anchor="last"/>
         </group>
 
         <!-- Refresh action -->
