@@ -32,3 +32,5 @@ build
 .idea
 .intellijPlatform
 app.properties
+
+*.md
