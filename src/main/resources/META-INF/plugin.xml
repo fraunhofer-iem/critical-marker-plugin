@@ -28,6 +28,12 @@
                 class="de.fraunhofer.iem.actions.RefreshSignaturesAction"
                 text="Refresh"
                 description="Regenerate the security-critical method list"/>
+        
+        <!-- Toggle Low Level Explanations action -->
+        <action id="de.fraunhofer.iem.ShowLowLevelExplanations"
+                class="de.fraunhofer.iem.actions.ShowLowLevelExplanationsAction"
+                text="Show Low Level Explanations"
+                description="Toggle display of explanations for Low level methods"/>
     </actions>
 
 

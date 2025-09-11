@@ -13,6 +13,10 @@ class SecurityMarkerActionGroup : ActionGroup("Security Critical Marker", true) 
             Metric.values().forEach { add(MetricSelectAction(it)) }
         }
 
-        return arrayOf(refresh, metricGroup)
+        // Add toggle for Low level explanations
+        val showLowLevelAction = ActionManager.getInstance().getAction("de.fraunhofer.iem.ShowLowLevelExplanations")
+            ?: ShowLowLevelExplanationsAction()
+
+        return arrayOf(refresh, metricGroup, showLowLevelAction)
     }
 }

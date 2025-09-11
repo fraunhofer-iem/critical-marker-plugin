@@ -9,6 +9,7 @@ import com.intellij.openapi.project.Project
 import com.intellij.openapi.roots.ProjectRootManager
 import com.intellij.xml.util.XmlStringUtil
 import de.fraunhofer.iem.Notification
+import de.fraunhofer.iem.Settings
 import de.fraunhofer.iem.llm.LlmClient
 import de.fraunhofer.iem.llm.Pricing
 import org.yaml.snakeyaml.Yaml
@@ -84,9 +85,15 @@ class DefaultCriticalMethodGenerator : CriticalMethodGenerator {
 
         // Create initial explanations with placeholders
         val res = mutableMapOf<String, String>()
+        val settings = Settings.getInstance()
+        val showLowLevelExplanations = settings.shouldShowLowLevelExplanations()
+        
         criticalMethods.forEach { (metSig, metricValue) ->
-            val placeholderExplanation = createPlaceholderExplanation(metric.label, metricValue, methodToLevelMap.getOrDefault(metSig, "NA"))
-            res[metSig] = placeholderExplanation
+            val level = methodToLevelMap.getOrDefault(metSig, "NA")
+            if (shouldGenerateExplanation(metSig, methodToLevelMap, showLowLevelExplanations)) {
+                val placeholderExplanation = createPlaceholderExplanation(metric.label, metricValue, level)
+                res[metSig] = placeholderExplanation
+            }
         }
 
         // Start background explanation generation with pre-computed method code
@@ -223,6 +230,19 @@ class DefaultCriticalMethodGenerator : CriticalMethodGenerator {
         return XmlStringUtil.wrapInHtml(html)
     }
 
+    private fun shouldGenerateExplanation(
+        signature: String, 
+        methodToLevelMap: Map<String, String>, 
+        showLowLevelExplanations: Boolean
+    ): Boolean {
+        val level = methodToLevelMap[signature] ?: "NA"
+        return when (level.uppercase()) {
+            "LOW" -> showLowLevelExplanations
+            "MEDIUM", "HIGH", "VERY_LOW", "VERY_HIGH" -> true
+            else -> true
+        }
+    }
+
     private fun generateExplanationsInBackground(
         project: Project,
         criticalMethods: Map<String, Number>,
@@ -231,7 +251,13 @@ class DefaultCriticalMethodGenerator : CriticalMethodGenerator {
         onExplanationReady: (signature: String, explanation: String) -> Unit
     ) {
         val metric = MetricState.getInstance().getSelected()
-        val methodsToProcess = criticalMethods.filterKeys { !filter(it) }
+        val settings = Settings.getInstance()
+        val showLowLevelExplanations = settings.shouldShowLowLevelExplanations()
+        
+        // Filter methods based on settings and existing filter
+        val methodsToProcess = criticalMethods.filterKeys { signature ->
+            !filter(signature) && shouldGenerateExplanation(signature, methodToLevelMap, showLowLevelExplanations)
+        }
         val totalMethods = methodsToProcess.size
 
         val task = object : Task.Backgroundable(project, "Generating Security Critical Explanations", true) {

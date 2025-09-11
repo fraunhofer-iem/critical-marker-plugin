@@ -7,6 +7,7 @@ import com.intellij.openapi.project.DumbAware
 import com.intellij.psi.PsiElement
 import com.intellij.psi.PsiMethod
 import de.fraunhofer.iem.SecurityTextAttributes
+import de.fraunhofer.iem.Settings
 import de.fraunhofer.iem.metricsUtil.SignatureService
 import org.jetbrains.uast.UMethod
 import org.jetbrains.uast.getContainingUClass
@@ -21,6 +22,14 @@ class SecurityMethodAnnotator : Annotator, DumbAware {
         val service = element.project.getService(SignatureService::class.java)
         val explanation = service.explanationFor(signature) ?: return
         val level = service.levelFor(signature) ?: return
+        
+        // Check if we should show this method based on settings
+        val settings = Settings.getInstance()
+        val showLowLevelExplanations = settings.shouldShowLowLevelExplanations()
+        
+        if (level.uppercase() == "LOW" && !showLowLevelExplanations) {
+            return
+        }
 
         val color = when (level.uppercase()) {
             "LOW" -> SecurityTextAttributes.Low

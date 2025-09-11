@@ -5,6 +5,7 @@ import com.intellij.codeInsight.daemon.LineMarkerProvider
 import com.intellij.openapi.editor.markup.GutterIconRenderer
 import com.intellij.openapi.util.IconLoader
 import com.intellij.psi.PsiElement
+import de.fraunhofer.iem.Settings
 import de.fraunhofer.iem.metricsUtil.SignatureService
 import org.jetbrains.uast.UMethod
 import org.jetbrains.uast.getContainingUClass
@@ -34,6 +35,14 @@ class SecurityMarker : LineMarkerProvider {
             ?: return null
 
         val level = element.project.getService(SignatureService::class.java).levelFor(signature) ?: return null
+        
+        // Check if we should show this method based on settings
+        val settings = Settings.getInstance()
+        val showLowLevelExplanations = settings.shouldShowLowLevelExplanations()
+        
+        if (level.uppercase() == "LOW" && !showLowLevelExplanations) {
+            return null
+        }
 
         val tooltip = { "$explanation\nLevel: $level\n\nSignature: $signature" }
 
