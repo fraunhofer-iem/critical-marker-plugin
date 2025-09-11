@@ -13,6 +13,11 @@
     <depends>org.jetbrains.kotlin</depends>
 
 
+    <applicationListeners>
+        <listener class="de.fraunhofer.iem.listeners.FileChangeListener"
+                  topic="com.intellij.openapi.vfs.newvfs.BulkFileListener"/>
+    </applicationListeners>
+
     <actions>
         <!-- Top-level popup menu -->
         <group id="de.fraunhofer.iem.SecurityMarkerMenu"
@@ -59,8 +64,5 @@
         <!-- Annotators must be registered per language -->
         <annotator language="JAVA"   implementationClass="de.fraunhofer.iem.annotators.SecurityMethodAnnotator"/>
         <annotator language="kotlin" implementationClass="de.fraunhofer.iem.annotators.SecurityMethodAnnotator"/>
-        
-        <!-- Startup activity to initialize FileChangeListener -->
-        <postStartupActivity implementation="de.fraunhofer.iem.FileChangeListenerStartup"/>
     </extensions>
 </idea-plugin>
