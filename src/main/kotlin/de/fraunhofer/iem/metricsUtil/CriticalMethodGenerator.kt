@@ -57,10 +57,10 @@ class DefaultCriticalMethodGenerator : CriticalMethodGenerator {
             }
         }
 
-        val nonZerCriticalMethods = filterZeros(criticalMethods)
+        val nonZeroCriticalMethods = filterZeros(criticalMethods)
 
         val methodToLevelMap = QuantileClassificationWithEqualFreq.discretize(
-            nonZerCriticalMethods.mapValues { (_, v) -> v.toDouble() },
+            nonZeroCriticalMethods.mapValues { (_, v) -> v.toDouble() },
             3,
             true,
             listOf("LOW", "MEDIUM", "HIGH")
@@ -68,10 +68,15 @@ class DefaultCriticalMethodGenerator : CriticalMethodGenerator {
 
         Notification.notifyInfo(project, "Completed generating metrics in $timeTaken milliseconds")
 
+        // Process the methods from high critical to low critical
+        val orderedCriticalMethods = nonZeroCriticalMethods.toList()
+            .sortedByDescending { (_, value) -> value.toDouble() }
+            .toMap()
+
         // Pre-compute method code within read action to avoid threading issues
         val methodCodeMap = mutableMapOf<String, String?>()
         ReadAction.nonBlocking<String> {
-            criticalMethods.keys.forEach { signature ->
+            orderedCriticalMethods.keys.forEach { signature ->
                 methodCodeMap[signature] = de.fraunhofer.iem.llm.PromptTemplate.getMethodCode(project, signature)
             }
 
@@ -88,7 +93,7 @@ class DefaultCriticalMethodGenerator : CriticalMethodGenerator {
         val settings = Settings.getInstance()
         val showLowLevelExplanations = settings.shouldShowLowLevelExplanations()
         
-        criticalMethods.forEach { (metSig, metricValue) ->
+        orderedCriticalMethods.forEach { (metSig, metricValue) ->
             val level = methodToLevelMap.getOrDefault(metSig, "NA")
             if (shouldGenerateExplanation(metSig, methodToLevelMap, showLowLevelExplanations)) {
                 val placeholderExplanation = createPlaceholderExplanation(metric.label, metricValue, level)
@@ -97,7 +102,7 @@ class DefaultCriticalMethodGenerator : CriticalMethodGenerator {
         }
 
         // Start background explanation generation with pre-computed method code
-        generateExplanationsInBackground(project, criticalMethods, methodToLevelMap, methodCodeMap, onExplanationReady)
+        generateExplanationsInBackground(project, orderedCriticalMethods, methodToLevelMap, methodCodeMap, onExplanationReady)
 
         first.putAll(res)
         second.putAll(methodToLevelMap)
