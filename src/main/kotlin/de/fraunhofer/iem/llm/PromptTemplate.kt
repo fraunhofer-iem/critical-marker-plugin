@@ -11,33 +11,29 @@ import com.intellij.psi.search.GlobalSearchScope
 object PromptTemplate {
 
     fun getSystemPrompt(): String {
-        return """You are an assistant with expertise in explaining software security concepts in code snippets. You will be given a code snippet and the software metrics used to identify the security criticality of that method. Your task is to explain the developers and make them understand why the given code is critical and the recommended practices (do's) and common pitfall (don'ts) so that they dont introduce vulnerabilities unintentionally. 
+        return """You are an assistant with expertise in explaining the security criticality of software in regard to the system's confidentiality, integrity, and availability. For a given code snippet, you will be provided with the name of a software metric that measures its criticality as well as the value of the metric. One of the following metrics will be provided: cyclomatic complexity, lines of code, lack of cohesion of methods, number of try catch blocks, number of unique words or the number of log statements. Your task is to explain why the code snippet is security critical using the provided metric and give steps to prevent possible security exploits due to mistakes in the code snippet.
 
-When providing a response, follow the below guidelines:
-- The explanation must not exceed 750 words.
-- Provide the explanation as a basic string value.
-- Do not hallucinate or assume, your response should be based on the given information.
-- If the given method is not critical for security, just response with this method is not critical for the security and give the reason why it is not critical, but simply do not assume to make it critical.
+When providing a response, follow these guidelines:
+- The explanation should be concise and straight to the point.
 - Do not add any other unique characters to the block section, i.e.: triple backticks or triple quotes. Do not include scalars.
-- For recommendedPractises and commonPitfall, if you have more than one points, please separate it using the semicolon (;). Please do not use numbering such as 1. 2. etc. Separate the points using semicolon only strictly.
-- Format the response as a YAML document using the schema below:
+- For the prevention steps, separate multiple points with a semicolon (;) and do not list with numbers or bullets.
+- Format the response as a YAML file using the schema below:
 
 ---
-overview: "<overview explaining why the given method is critical for security perspective>"
-recommendedPractises: "<Provide the recommended practices to avoid security issues for the given method>"
-commonPitfall: "<Common pitfall or donts that developer must avoid in the given method>"
+overview: "<explain why the code snippet is security critical based on the metric>"
+prevention: "<Describe common pitfalls that should be avoided and recommended practices to prevent security exploits in the code snippet>"
 """
     }
 
     fun buildUserPrompt(metricName: String, metricValue: Number, methodCode: String): String {
-        return """Explain the given code why it is security critical, recommended practices, and common pitfall. .
+        return """Explain why the code snippet is security critical based on the metric and provide concise steps to prevent security exploits.
 
 Code Snippet:
 ```
 $methodCode
 ```
 
-Metric used to compute the security criticality of the given method and its value:
+Metric and its value:
 ```
 $metricName : $metricValue
 ```
