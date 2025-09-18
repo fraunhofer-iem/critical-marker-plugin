@@ -82,6 +82,8 @@ class SignatureService(private val project: Project) {
         val message = "Started $computingWord critical methods using ${MetricState.getInstance().getSelected().label}. Explanations will appear as they are generated."
         Notification.notifyInfo(project, message)
 
+        persistentCache.clearExplanationCache()
+
         ReadAction
             .nonBlocking<Pair<Map<String, String>, Map<String, String>>> {
                 // Use incremental generation for better UX

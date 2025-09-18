@@ -142,7 +142,11 @@ class PersistentCacheService(private val project: Project) {
         // Clear disk cache
         deleteCacheFiles()
     }
-    
+
+    fun clearExplanationCache() {
+        explanationCache.clear()
+    }
+
     /**
      * Update cache metadata when project changes
      */
