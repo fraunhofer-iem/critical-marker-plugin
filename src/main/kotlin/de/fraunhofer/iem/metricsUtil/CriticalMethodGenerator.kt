@@ -95,6 +95,16 @@ class DefaultCriticalMethodGenerator : CriticalMethodGenerator {
         val settings = Settings.getInstance()
         val showLowLevelExplanations = settings.shouldShowLowLevelExplanations()
 
+        // Create placeholder explanations for all critical methods immediately
+        orderedCriticalMethods.forEach { (signature, metricValue) ->
+            val criticalityLevel = methodToLevelMap[signature] ?: "NA"
+            val placeholderExplanation = createPlaceholderExplanation(metric.label, metricValue, criticalityLevel)
+            res[signature] = placeholderExplanation
+            
+            // Immediately call onExplanationReady with placeholder
+            onExplanationReady(signature, placeholderExplanation)
+        }
+
         // Start background explanation generation with pre-computed method code
         generateExplanationsInBackground(project, orderedCriticalMethods, methodToLevelMap, methodCodeMap, onExplanationReady)
 
@@ -111,8 +121,15 @@ class DefaultCriticalMethodGenerator : CriticalMethodGenerator {
         criticalityLevel: String
     ): String {
 
+        val criticalityColor = when (criticalityLevel) {
+            "LOW" -> "#e7b416" // amber
+            "MEDIUM" -> "#db7b2b" // orange
+            "HIGH" -> "#cc3232" // red
+            else -> "#000000" // default to black if unknown
+        }
+
         val html = """
-        <b>Security Criticality: </b> $metric=$metricValue, $criticalityLevel
+        <b><i>Security Criticality: $metric=$metricValue, <span style="color: $criticalityColor;">$criticalityLevel</span></i></b>
         <p>$overview</p>
         <p><b>Precautions: </b>
         ${bulletList(recommended)}</p>
@@ -189,25 +206,18 @@ class DefaultCriticalMethodGenerator : CriticalMethodGenerator {
     }
 
     private fun createPlaceholderExplanation(metricLabel: String, metricValue: Number, criticalityLevel: String): String {
-        var note = "<b>Note:</b> <i>$metricLabel</i> metric is used to assess security criticality, and its score is <i>$metricValue</i>."
-
-        if (criticalityLevel != "NA") {
-            note += " This method falls under the <i>$criticalityLevel</i> level."
+        val criticalityColor = when (criticalityLevel) {
+            "LOW" -> "#e7b416" // amber
+            "MEDIUM" -> "#db7b2b" // orange
+            "HIGH" -> "#cc3232" // red
+            else -> "#000000" // default to black if unknown
         }
 
         val html = """
-        <b>Overview</b><br/>
-        <i>Generating explanation...</i>
-        <br/><br/>
-        <b>Recommended Practices</b>
-        <i>Generating recommendations...</i>
-        <br/>
-        <b>Common Pitfalls</b>
-        <i>Generating pitfalls...</i>
-        <br/>
-        <span style="color:gray;">
-            $note
-        </span>
+        <b><i>Security Criticality: $metricLabel=$metricValue, <span style="color: $criticalityColor;">$criticalityLevel</span></i></b>
+        <p>Generating explanation, please wait...</p>
+        <p><b>Precautions: </b>
+        Generating precautions, please wait...</p>
     """.trimIndent()
 
         return XmlStringUtil.wrapInHtml(html)
@@ -337,9 +347,15 @@ class DefaultCriticalMethodGenerator : CriticalMethodGenerator {
     }
 
     private fun createErrorExplanation(metric: String, metricValue: Number, criticalityLevel: String, errorMessage: String): String {
+        val criticalityColor = when (criticalityLevel) {
+            "LOW" -> "#e7b416" // amber
+            "MEDIUM" -> "#db7b2b" // orange
+            "HIGH" -> "#cc3232" // red
+            else -> "#000000" // default to black if unknown
+        }
 
         val html = """
-        <p><b>Security Criticality: </b> $metric=$metricValue, $criticalityLevel</p>
+        <b><i>Security Criticality: $metric=$metricValue, <span style="color: $criticalityColor;">$criticalityLevel</span></i></b>
         <p>A security critical assessment explanation is not available for this method.</p>
     """.trimIndent()
 
