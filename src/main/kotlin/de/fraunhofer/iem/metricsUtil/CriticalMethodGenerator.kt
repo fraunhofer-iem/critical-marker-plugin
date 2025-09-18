@@ -174,9 +174,12 @@ class DefaultCriticalMethodGenerator : CriticalMethodGenerator {
 
         return true
     }
-    private fun getSourceRoots(project: Project): List<String> {
-        val roots = ProjectRootManager.getInstance(project).contentSourceRoots
-        return roots.map { it.path }   // absolute paths on disk
+    private fun getSourceRoots(project: Project): Set<String> {
+        return ModuleManager.getInstance(project).modules.flatMap { module ->
+            ModuleRootManager.getInstance(module)
+                .getSourceRoots(JavaSourceRootType.SOURCE)
+                .mapNotNull { it.path }
+            }.toSet()
     }
 
     private fun filterZeros(map: Map<String, Number>): Map<String, Number> {
