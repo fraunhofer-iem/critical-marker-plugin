@@ -92,14 +92,6 @@ class DefaultCriticalMethodGenerator : CriticalMethodGenerator {
         val res = mutableMapOf<String, String>()
         val settings = Settings.getInstance()
         val showLowLevelExplanations = settings.shouldShowLowLevelExplanations()
-        
-        orderedCriticalMethods.forEach { (metSig, metricValue) ->
-            val level = methodToLevelMap.getOrDefault(metSig, "NA")
-            if (shouldGenerateExplanation(metSig, methodToLevelMap, showLowLevelExplanations)) {
-                val placeholderExplanation = createPlaceholderExplanation(metric.label, metricValue, level)
-                res[metSig] = placeholderExplanation
-            }
-        }
 
         // Start background explanation generation with pre-computed method code
         generateExplanationsInBackground(project, orderedCriticalMethods, methodToLevelMap, methodCodeMap, onExplanationReady)
@@ -112,35 +104,16 @@ class DefaultCriticalMethodGenerator : CriticalMethodGenerator {
     private fun htmlTooltip(
         overview: String?,
         recommended: String?,
-        pitfalls: String?,
         metric: String,
         metricValue: Number,
         criticalityLevel: String
     ): String {
-        var note = "<b>Note:</b> <i>$metric</i> metric is used to assess security criticality, and its score is <i>$metricValue</i>."
-
-        if (criticalityLevel != "NA") {
-            note += " This method falls under the <i>$criticalityLevel</i> level."
-        }
-
-        val ov = if (overview.isNullOrBlank())
-            "<i>No overview</i>"
-        else
-            XmlStringUtil.escapeString(overview.trim(), false).replace("\n", "<br/>")
 
         val html = """
-        <b>Overview</b><br/>
-        $ov
-        <br/><br/>
-        <b>Recommended Practices</b>
-        ${bulletList(recommended)}
-        <br/>
-        <b>Common Pitfalls</b>
-        ${bulletList(pitfalls)}
-        <br/>
-        <span style="color:gray;">
-            $note
-        </span>
+        <b>Security Criticality: </b> $metric=$metricValue, $criticalityLevel
+        <p>$overview</p>
+        <p><b>Precautions: </b>
+        ${bulletList(recommended)}</p>
     """.trimIndent()
 
         // Wrap with <html>…</html> for IntelliJ tooltips
@@ -169,7 +142,7 @@ class DefaultCriticalMethodGenerator : CriticalMethodGenerator {
     }
 
     private fun getRecommendedPractises(llmResponse: String): String {
-        return loadAndGetLlmResponseAsMap(llmResponse).getOrDefault("recommendedPractises", "NA")
+        return loadAndGetLlmResponseAsMap(llmResponse).getOrDefault("prevention", "NA")
     }
 
     private fun getCommonPitfall(llmResponse: String): String {
@@ -291,7 +264,6 @@ class DefaultCriticalMethodGenerator : CriticalMethodGenerator {
                         val fullExplanation = htmlTooltip(
                             overview,
                             recommendedPractices,
-                            commonPitfall,
                             metric.label,
                             metricValue,
                             methodToLevelMap.getOrDefault(metSig, "NA")
@@ -359,26 +331,11 @@ class DefaultCriticalMethodGenerator : CriticalMethodGenerator {
         task.queue()
     }
 
-    private fun createErrorExplanation(metricLabel: String, metricValue: Number, criticalityLevel: String, errorMessage: String): String {
-        var note = "<b>Note:</b> <i>$metricLabel</i> metric is used to assess security criticality, and its score is <i>$metricValue</i>."
-
-        if (criticalityLevel != "NA") {
-            note += " This method falls under the <i>$criticalityLevel</i> level."
-        }
+    private fun createErrorExplanation(metric: String, metricValue: Number, criticalityLevel: String, errorMessage: String): String {
 
         val html = """
-        <b>Overview</b><br/>
-        <i style="color: red;">Failed to generate explanation: $errorMessage</i>
-        <br/><br/>
-        <b>Recommended Practices</b>
-        <i>Unable to generate recommendations due to error</i>
-        <br/>
-        <b>Common Pitfalls</b>
-        <i>Unable to generate pitfalls due to error</i>
-        <br/>
-        <span style="color:gray;">
-            $note
-        </span>
+        <p><b>Security Criticality: </b> $metric=$metricValue, $criticalityLevel</p>
+        <p>A security critical assessment explanation is not available for this method.</p>
     """.trimIndent()
 
         return XmlStringUtil.wrapInHtml(html)
