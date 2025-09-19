@@ -128,12 +128,11 @@ class DefaultCriticalMethodGenerator : CriticalMethodGenerator {
             else -> "#000000" // default to black if unknown
         }
 
-        val html = """
-        <b><i>Security Criticality: $metric=$metricValue, <span style="color: $criticalityColor;">$criticalityLevel</span></i></b>
-        <p>$overview</p>
-        <p><b>Precautions: </b>
-        ${bulletList(recommended)}</p>
-    """.trimIndent()
+        val html =
+            "<b><i>Security Criticality: $metric=$metricValue, " +
+                    "<span style='color:$criticalityColor;'>$criticalityLevel</span></i></b><br>" +
+                    "$overview<br><br>" +
+                    "<b>Precautions:</b><br> ${bulletList(recommended)}"
 
         // Wrap with <html>…</html> for IntelliJ tooltips
         return XmlStringUtil.wrapInHtml(html)
@@ -213,12 +212,11 @@ class DefaultCriticalMethodGenerator : CriticalMethodGenerator {
             else -> "#000000" // default to black if unknown
         }
 
-        val html = """
-        <b><i>Security Criticality: $metricLabel=$metricValue, <span style="color: $criticalityColor;">$criticalityLevel</span></i></b>
-        <p>Generating explanation, please wait...</p>
-        <p><b>Precautions: </b>
-        Generating precautions, please wait...</p>
-    """.trimIndent()
+        val html =
+            "<b><i>Security Criticality: $metricLabel=$metricValue, " +
+                    "<span style='color:$criticalityColor;'>$criticalityLevel</span></i></b><br>" +
+                    "Generating explanation, please wait...<br><br>" +
+                    "<b>Precautions:</b><br>Generating precautions, please wait..."
 
         return XmlStringUtil.wrapInHtml(html)
     }
