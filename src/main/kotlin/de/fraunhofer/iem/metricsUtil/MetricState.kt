@@ -11,7 +11,6 @@ enum class Metric(val id: String, val label: String) {
     LOC("LOC", "Lines of Code"),
     LCOM("LCOM", "Lack of Cohesion of Methods"),
     TRYCATCHQTY("TRYCATCHQTY", "Number of try catch blocks"),
-    UNIQUEWORDS("UNIQUEWORDS", "Number of unique words"),
     LOGSTMT("LOGSTMT", "Number of log statements"),
 }
 

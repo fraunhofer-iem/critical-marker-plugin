@@ -15,7 +15,7 @@ private val wmc = mutableMapOf<String, Int>()
 private val loc = mutableMapOf<String, Int>()
 private val lcomNorm = mutableMapOf<String, Float>()
 private val tryCatchQty = mutableMapOf<String, Int>()
-private val uniqueWordsQty = mutableMapOf<String, Int>()
+// private val uniqueWordsQty = mutableMapOf<String, Int>()
 private val logStmtQty = mutableMapOf<String, Int>()
 
 // ---------- Models ----------
@@ -102,7 +102,7 @@ fun getCriticalMethod(projSrcPath: String, metric: Metric, project: Project): Mu
                 loc[sig] = method.loc
                 lcomNorm[sig] = classResult.lcomNormalized
                 tryCatchQty[sig] = method.tryCatchQty
-                uniqueWordsQty[sig] = method.uniqueWordsQty
+                // uniqueWordsQty[sig] = method.uniqueWordsQty
                 logStmtQty[sig] = method.logStatementsQty
             } else {
                 println("Could not find method: ${classResult.className}.${method.methodName}")
@@ -114,7 +114,7 @@ fun getCriticalMethod(projSrcPath: String, metric: Metric, project: Project): Mu
     val processedLoc = processMethodSignatures(loc, project)
     val processedLcomNorm = processMethodSignatures(lcomNorm, project)
     val processedTryCatchQty = processMethodSignatures(tryCatchQty, project)
-    val processedUniqueWordsQty = processMethodSignatures(uniqueWordsQty, project)
+    // val processedUniqueWordsQty = processMethodSignatures(uniqueWordsQty, project)
     val processedLogStmtQty = processMethodSignatures(logStmtQty, project)
 
     return when (metric) {
@@ -122,7 +122,7 @@ fun getCriticalMethod(projSrcPath: String, metric: Metric, project: Project): Mu
         Metric.LOC -> processedLoc
         Metric.LCOM -> processedLcomNorm
         Metric.TRYCATCHQTY -> processedTryCatchQty
-        Metric.UNIQUEWORDS -> processedUniqueWordsQty
+        // Metric.UNIQUEWORDS -> processedUniqueWordsQty
         Metric.LOGSTMT -> processedLogStmtQty
     }
 }
