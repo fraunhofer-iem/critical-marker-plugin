@@ -222,6 +222,9 @@ class DefaultCriticalMethodGenerator : CriticalMethodGenerator {
         if (sig.contains("org.springframework.samples.petclinic.owner.OwnerController#initUpdateOwnerForm"))
             return false
 
+        if (sig.contains("org.springframework.samples.petclinic.owner.OwnerRepositoryCustomImpl#save"))
+            return false
+
         return true
     }
     private fun getSourceRoots(project: Project): Set<String> {
