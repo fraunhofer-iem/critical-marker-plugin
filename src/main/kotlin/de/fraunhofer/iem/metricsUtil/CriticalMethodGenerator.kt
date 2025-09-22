@@ -75,6 +75,38 @@ class DefaultCriticalMethodGenerator : CriticalMethodGenerator {
             .sortedByDescending { (_, value) -> value.toDouble() }
             .toMap()
 
+        // List of methods to check
+        val methodsToCheck = listOf(
+            "org.springframework.samples.petclinic.owner.OwnerController#showOwner",
+            "org.springframework.samples.petclinic.owner.OwnerController#initUpdateOwnerForm",
+            "org.springframework.samples.petclinic.owner.OwnerController#processFindForm",
+            "org.springframework.samples.petclinic.owner.OwnerController#processCreationForm",
+            "org.springframework.samples.petclinic.owner.PetController#findOwner",
+            "org.springframework.samples.petclinic.owner.OwnerRepositoryCustomImpl#findById",
+            "org.springframework.samples.petclinic.owner.OwnerRepositoryCustomImpl#findByLastName",
+            "org.springframework.samples.petclinic.owner.OwnerRepositoryCustomImpl#save"
+        )
+
+        // Find the index of each method in the orderedCriticalMethods
+        val methodIndices = methodsToCheck.mapNotNull { methodToCheck ->
+            orderedCriticalMethods.keys.indexOfFirst { it.startsWith(methodToCheck) }
+                .takeIf { it != -1 }
+                ?.let { index ->
+                    val actualValue = orderedCriticalMethods.entries.elementAt(index).value
+                    "$methodToCheck,$index,$actualValue"
+                }
+        }.joinToString(separator = "\n")
+
+        // Log or use the methodIndices string as needed
+        log.info("Method Indices:\n$methodIndices")
+
+        // Create a string where each line starts with the key, followed by a comma, and then the value
+        val topTenCriticalMethodsString = orderedCriticalMethods.entries.take(10)
+            .joinToString(separator = "\n") { "${it.key},${it.value}" }
+
+        val totalCriticalMethods = orderedCriticalMethods.size
+
+
         // Pre-compute method code within read action to avoid threading issues
         val methodCodeMap = mutableMapOf<String, String?>()
         ReadAction.nonBlocking<String> {
