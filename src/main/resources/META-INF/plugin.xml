@@ -51,6 +51,7 @@
 
     <extensions defaultExtensionNs="com.intellij">
         <codeInsight.lineMarkerProvider language="JAVA" implementationClass="de.fraunhofer.iem.SecurityMarker"/>
+        <codeInsight.lineMarkerProvider language="kotlin" implementationClass="de.fraunhofer.iem.SecurityMarker"/>
         <projectService serviceImplementation="de.fraunhofer.iem.metricsUtil.SignatureService"/>
         <applicationService serviceImplementation="de.fraunhofer.iem.Settings"/>
         <projectService serviceInterface="de.fraunhofer.iem.metricsUtil.CriticalMethodGenerator" serviceImplementation="de.fraunhofer.iem.metricsUtil.DefaultCriticalMethodGenerator"/>
@@ -63,6 +64,6 @@
 
         <!-- Annotators must be registered per language -->
         <annotator language="JAVA"   implementationClass="de.fraunhofer.iem.annotators.SecurityMethodAnnotator"/>
-        <annotator language="kotlin" implementationClass="de.fraunhofer.iem.annotators.SecurityMethodAnnotator"/>
+        <annotator language="kotlin" implementationClass="de.fraunhofer.iem.annotators.KotlinSecurityMethodAnnotator"/>
     </extensions>
 </idea-plugin>
