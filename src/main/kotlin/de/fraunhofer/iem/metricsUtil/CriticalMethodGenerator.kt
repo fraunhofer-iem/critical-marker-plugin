@@ -154,9 +154,9 @@ class DefaultCriticalMethodGenerator : CriticalMethodGenerator {
     ): String {
 
         val criticalityColor = when (criticalityLevel) {
-            "LOW" -> "#e7b416" // amber
-            "MEDIUM" -> "#db7b2b" // orange
-            "HIGH" -> "#cc3232" // red
+            "LOW" -> "#56CCF2" // amber
+            "MEDIUM" -> "#F2C94C" // orange
+            "HIGH" -> "#F2994A" // red
             else -> "#000000" // default to black if unknown
         }
 
