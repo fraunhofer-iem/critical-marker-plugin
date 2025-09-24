@@ -4,6 +4,7 @@ import com.fasterxml.jackson.module.kotlin.jacksonObjectMapper
 import com.fasterxml.jackson.module.kotlin.readValue
 import com.intellij.openapi.project.ProjectManager
 import com.openai.client.okhttp.OpenAIOkHttpClient
+import com.openai.models.ReasoningEffort
 import com.openai.models.chat.completions.ChatCompletion
 import com.openai.models.chat.completions.ChatCompletionCreateParams
 import de.fraunhofer.iem.cache.PersistentCacheService
