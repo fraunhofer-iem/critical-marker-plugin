@@ -46,6 +46,7 @@ object LlmClient {
             .addUserMessage(PromptTemplate.buildUserPrompt(metricName, metricValue, methodCode))
             .model(llmConfig.model)
             .temperature(llmConfig.temperature.toDouble())
+            .reasoningEffort(ReasoningEffort.MINIMAL)
             .build()
 
         val chatCompletion: ChatCompletion = client.chat().completions().create(params)
