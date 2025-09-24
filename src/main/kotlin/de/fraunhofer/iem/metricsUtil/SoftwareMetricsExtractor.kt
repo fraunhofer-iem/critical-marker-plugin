@@ -110,20 +110,13 @@ fun getCriticalMethod(projSrcPath: String, metric: Metric, project: Project): Mu
         }
     }
 
-    val processedWmc = processMethodSignatures(wmc, project)
-    val processedLoc = processMethodSignatures(loc, project)
-    val processedLcomNorm = processMethodSignatures(lcomNorm, project)
-    val processedTryCatchQty = processMethodSignatures(tryCatchQty, project)
-    // val processedUniqueWordsQty = processMethodSignatures(uniqueWordsQty, project)
-    val processedLogStmtQty = processMethodSignatures(logStmtQty, project)
-
     return when (metric) {
-        Metric.COMPLEXITY -> processedWmc
-        Metric.LOC -> processedLoc
-        Metric.LCOM -> processedLcomNorm
-        Metric.TRYCATCHQTY -> processedTryCatchQty
+        Metric.COMPLEXITY -> processMethodSignatures(wmc, project)
+        Metric.LOC -> processMethodSignatures(loc, project)
+        Metric.LCOM -> processMethodSignatures(lcomNorm, project)
+        Metric.TRYCATCHQTY -> processMethodSignatures(tryCatchQty, project)
         // Metric.UNIQUEWORDS -> processedUniqueWordsQty
-        Metric.LOGSTMT -> processedLogStmtQty
+        Metric.LOGSTMT -> processMethodSignatures(logStmtQty, project)
     }
 }
 
