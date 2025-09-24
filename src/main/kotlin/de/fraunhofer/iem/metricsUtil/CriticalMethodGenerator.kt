@@ -287,7 +287,10 @@ class DefaultCriticalMethodGenerator : CriticalMethodGenerator {
         val totalMethods = methodsToProcess.size
 
         val task = object : Task.Backgroundable(project, "Generating Security Critical Explanations", true) {
+            var startTime: Long = 0
+            var endTime: Long = 0
             override fun run(indicator: ProgressIndicator) {
+                startTime = System.currentTimeMillis()
                 indicator.isIndeterminate = false
                 indicator.fraction = 0.0
                 indicator.text = "Starting explanation generation for $totalMethods methods..."
@@ -349,6 +352,7 @@ class DefaultCriticalMethodGenerator : CriticalMethodGenerator {
                 log.warn("\uD83D\uDD34Total input tokens = " + Pricing.totalInputTokens)
                 log.warn("\uD83D\uDD34Total output tokens = " + Pricing.totalOutputTokens)
                 log.warn("\uD83D\uDD34Total request sent = " + Pricing.totalRequestSent)
+                log.warn("\uD83D\uDD34Average time taken by single request = " + Pricing.getAverageTimeOfSingleLlmRequest() + "ms")
                 log.warn("\uD83D\uDD34Total cost = " + Pricing.totalCost)
                 log.warn("\uD83D\uDD34Total discounted cost = " + Pricing.discountedTotalCost)
                 log.warn("\uD83D\uDD34Total number of methods for explanation generation = " + methodsToProcess.size)
@@ -356,7 +360,9 @@ class DefaultCriticalMethodGenerator : CriticalMethodGenerator {
 
             override fun onSuccess() {
                 try {
-                    Notification.notifyInfo(project, "Successfully completed explanation generation for all methods")
+                    endTime = System.currentTimeMillis()
+                    val duration = endTime - startTime
+                    Notification.notifyInfo(project, "Successfully completed explanation generation for all methods in " + duration + "ms")
                     log.info("Successfully completed explanation generation for all methods")
                 } finally {
                     // Always reset the flag when the task completes

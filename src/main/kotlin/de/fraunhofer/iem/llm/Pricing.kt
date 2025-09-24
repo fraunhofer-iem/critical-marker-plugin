@@ -32,7 +32,17 @@ object Pricing {
     var totalRequestSent: Int = 0
         private set
 
-    fun recordCost(chatCompletion: ChatCompletion, model: String = "gpt-4o", discount: Double = 0.11) {
+    private var singleRequestTime: MutableList<Long> = mutableListOf()
+
+    fun getAverageTimeOfSingleLlmRequest(): Long {
+        return if (singleRequestTime.isNotEmpty()) {
+            singleRequestTime.average().toLong()
+        } else {
+            0L
+        }
+    }
+
+    fun recordCost(chatCompletion: ChatCompletion, timeTaken: Long, model: String = "gpt-4o", discount: Double = 0.11) {
         val (inputRate, outputRate) = rates[model] ?: error("Unknown model: $model")
 
         val inTok = chatCompletion.usage().get().promptTokens()
@@ -41,6 +51,7 @@ object Pricing {
         val normal = (inTok / 1000.0) * inputRate + (outTok / 1000.0) * outputRate
         val discounted = normal * (1 - discount)
 
+        singleRequestTime.add(timeTaken)
         totalCost += normal
         discountedTotalCost += discounted
         totalInputTokens += inTok

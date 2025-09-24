@@ -31,6 +31,8 @@ object LlmClient {
             println("DEBUG: No open project found")
         }
 
+        // Measure the actual LLM API call time
+        val apiCallStartTime = System.currentTimeMillis()
         val llmConfig = LlmConfig()
 
         val client = OpenAIOkHttpClient.builder()
@@ -47,9 +49,11 @@ object LlmClient {
             .build()
 
         val chatCompletion: ChatCompletion = client.chat().completions().create(params)
+        val apiCallEndTime = System.currentTimeMillis()
+        val apiCallDuration = apiCallEndTime - apiCallStartTime
 
         if (chatCompletion.usage().isPresent) {
-            Pricing.recordCost(chatCompletion)
+            Pricing.recordCost(chatCompletion, apiCallDuration)
         }
 
         val response = chatCompletion.choices().first().message()._content().toString()
