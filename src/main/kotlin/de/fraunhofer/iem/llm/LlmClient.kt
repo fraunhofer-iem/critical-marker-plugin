@@ -12,6 +12,25 @@ import de.fraunhofer.iem.cache.PersistentCacheService
 object LlmClient {
     private val mapper = jacksonObjectMapper()
 
+    private fun getParams(llmConfig: LlmConfig, metricName: String, metricValue: Number, methodCode: String): ChatCompletionCreateParams {
+        if (llmConfig.model.startsWith("gpt-4")) {
+            return ChatCompletionCreateParams.builder()
+                .addSystemMessage(PromptTemplate.getSystemPrompt())
+                .addUserMessage(PromptTemplate.buildUserPrompt(metricName, metricValue, methodCode))
+                .model(llmConfig.model)
+                .temperature(llmConfig.temperature.toDouble())
+                .build()
+        } else {
+            return ChatCompletionCreateParams.builder()
+                .addSystemMessage(PromptTemplate.getSystemPrompt())
+                .addUserMessage(PromptTemplate.buildUserPrompt(metricName, metricValue, methodCode))
+                .model(llmConfig.model)
+                .temperature(llmConfig.temperature.toDouble())
+                .reasoningEffort(ReasoningEffort.MINIMAL)
+                .build()
+        }
+    }
+
     fun sendRequest(methodSig: String, metricName: String, metricValue: Number, methodCode: String): String {
         val cacheKey = "$methodSig|$metricName|$metricValue"
         
@@ -42,13 +61,7 @@ object LlmClient {
             .queryParams(mapOf("api-version" to listOf("2024-02-01")))
             .build()
 
-        val params = ChatCompletionCreateParams.builder()
-            .addSystemMessage(PromptTemplate.getSystemPrompt())
-            .addUserMessage(PromptTemplate.buildUserPrompt(metricName, metricValue, methodCode))
-            .model(llmConfig.model)
-            .temperature(llmConfig.temperature.toDouble())
-            .reasoningEffort(ReasoningEffort.MINIMAL)
-            .build()
+        val params = getParams(llmConfig, metricName, metricValue, methodCode)
 
         val chatCompletion: ChatCompletion = client.chat().completions().create(params)
         val apiCallEndTime = System.currentTimeMillis()
