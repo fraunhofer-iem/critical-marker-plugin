@@ -7,11 +7,11 @@ import com.intellij.openapi.components.State
 import com.intellij.openapi.components.Storage
 
 enum class Metric(val id: String, val label: String) {
-    COMPLEXITY("COMPLEXITY", "Cyclomatic Complexity"),
+    COMPLEXITY("CC", "Cyclomatic Complexity"),
     LOC("LOC", "Lines of Code"),
     LCOM("LCOM", "Lack of Cohesion of Methods"),
-    TRYCATCHQTY("TRYCATCHQTY", "Number of try catch blocks"),
-    LOGSTMT("LOGSTMT", "Number of log statements"),
+    //TRYCATCHQTY("TRYCATCHQTY", "Number of try catch blocks"),
+    //LOGSTMT("LOGSTMT", "Number of log statements"),
 }
 
 @State(name = "SecurityMarkerMetricsState", storages = [Storage("security-marker.xml")])

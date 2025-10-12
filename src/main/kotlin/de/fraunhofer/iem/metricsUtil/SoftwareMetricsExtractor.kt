@@ -114,9 +114,9 @@ fun getCriticalMethod(projSrcPath: String, metric: Metric, project: Project): Mu
         Metric.COMPLEXITY -> processMethodSignatures(wmc, project)
         Metric.LOC -> processMethodSignatures(loc, project)
         Metric.LCOM -> processMethodSignatures(lcomNorm, project)
-        Metric.TRYCATCHQTY -> processMethodSignatures(tryCatchQty, project)
+        // Metric.TRYCATCHQTY -> processMethodSignatures(tryCatchQty, project)
         // Metric.UNIQUEWORDS -> processedUniqueWordsQty
-        Metric.LOGSTMT -> processMethodSignatures(logStmtQty, project)
+        // Metric.LOGSTMT -> processMethodSignatures(logStmtQty, project)
     }
 }
 

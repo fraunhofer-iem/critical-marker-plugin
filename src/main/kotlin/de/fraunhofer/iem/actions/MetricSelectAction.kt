@@ -9,7 +9,7 @@ import de.fraunhofer.iem.metricsUtil.SignatureService
 
 
 class MetricSelectAction(private val metric: Metric) :
-    ToggleAction(metric.label) {
+    ToggleAction(metric.label + " (${metric.id})") {
 
     override fun isSelected(e: AnActionEvent): Boolean =
         MetricState.getInstance().getSelected() == metric
