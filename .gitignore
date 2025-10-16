@@ -33,4 +33,6 @@ build
 .intellijPlatform
 app.properties
 
-*.md
+PERSISTENT_CACHING.md
+SOLUTION_ARCHITECTURE.md
+test_cache.md
