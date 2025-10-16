@@ -12,18 +12,18 @@ import de.fraunhofer.iem.cache.PersistentCacheService
 object LlmClient {
     private val mapper = jacksonObjectMapper()
 
-    private fun getParams(llmConfig: LlmConfig, metricName: String, metricValue: Number, methodCode: String): ChatCompletionCreateParams {
+    private fun getParams(llmConfig: LlmConfig, metricName: String, metricValue: Number, metricValueInterpretation: String, methodCode: String): ChatCompletionCreateParams {
         if (llmConfig.model.startsWith("gpt-4")) {
             return ChatCompletionCreateParams.builder()
                 .addSystemMessage(PromptTemplate.getSystemPrompt())
-                .addUserMessage(PromptTemplate.buildUserPrompt(metricName, metricValue, methodCode))
+                .addUserMessage(PromptTemplate.buildUserPrompt(metricName, metricValue, metricValueInterpretation, methodCode))
                 .model(llmConfig.model)
                 .temperature(llmConfig.temperature.toDouble())
                 .build()
         } else {
             return ChatCompletionCreateParams.builder()
                 .addSystemMessage(PromptTemplate.getSystemPrompt())
-                .addUserMessage(PromptTemplate.buildUserPrompt(metricName, metricValue, methodCode))
+                .addUserMessage(PromptTemplate.buildUserPrompt(metricName, metricValue, metricValueInterpretation, methodCode))
                 .model(llmConfig.model)
                 .temperature(llmConfig.temperature.toDouble())
                 .reasoningEffort(ReasoningEffort.MINIMAL)
@@ -31,7 +31,7 @@ object LlmClient {
         }
     }
 
-    fun sendRequest(methodSig: String, metricName: String, metricValue: Number, methodCode: String): String {
+    fun sendRequest(methodSig: String, metricName: String, metricValue: Number, metricValueInterpretation: String, methodCode: String): String {
         val cacheKey = "$methodSig|$metricName|$metricValue"
         
         // Try to get from persistent cache first
@@ -61,7 +61,7 @@ object LlmClient {
             .queryParams(mapOf("api-version" to listOf("2024-02-01")))
             .build()
 
-        val params = getParams(llmConfig, metricName, metricValue, methodCode)
+        val params = getParams(llmConfig, metricName, metricValue, metricValueInterpretation, methodCode)
 
         val chatCompletion: ChatCompletion = client.chat().completions().create(params)
         val apiCallEndTime = System.currentTimeMillis()

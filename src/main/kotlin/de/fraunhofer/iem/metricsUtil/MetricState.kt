@@ -6,12 +6,12 @@ import com.intellij.openapi.components.Service
 import com.intellij.openapi.components.State
 import com.intellij.openapi.components.Storage
 
-enum class Metric(val id: String, val label: String) {
-    COMPLEXITY("CC", "Cyclomatic Complexity"),
-    LOC("LOC", "Lines of Code"),
-    LCOM("LCOM", "Lack of Cohesion of Methods"),
+enum class Metric(val id: String, val label: String, val valueInterpretation: String) {
+    COMPLEXITY("CC", "Cyclomatic Complexity", "A low CC (e.g., 1) indicates simple, linear code, while higher values denote more complex control flow with greater error potential."),
+    LOC("LOC", "Lines of Code", "A low LOC value reflects a short, easy-to-understand method, whereas higher values suggest larger, harder-to-maintain code."),
+    LCOM("LCOM", "Lack of Cohesion of Methods", "A low LCOM value indicates cohesive, focused functionality, while higher values imply weak cohesion and unclear class responsibilities.")
     //TRYCATCHQTY("TRYCATCHQTY", "Number of try catch blocks"),
-    //LOGSTMT("LOGSTMT", "Number of log statements"),
+    //LOGSTMT("LOGSTMT", "Number of log statements")
 }
 
 @State(name = "SecurityMarkerMetricsState", storages = [Storage("security-marker.xml")])

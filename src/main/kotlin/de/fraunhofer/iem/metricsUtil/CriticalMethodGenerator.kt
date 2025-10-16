@@ -308,7 +308,7 @@ class DefaultCriticalMethodGenerator : CriticalMethodGenerator {
                         
                         // Use pre-computed method code to avoid PSI access from background thread
                         val methodCode = methodCodeMap[metSig] ?: "Method code not available"
-                        val exp = LlmClient.sendRequest(metSig, metric.label, metricValue, methodCode)
+                        val exp = LlmClient.sendRequest(metSig, metric.label, metricValue, metric.valueInterpretation, methodCode)
                         val overview = getOverview(exp)
                         val recommendedPractices = getRecommendedPractises(exp)
                         val commonPitfall = getCommonPitfall(exp)
