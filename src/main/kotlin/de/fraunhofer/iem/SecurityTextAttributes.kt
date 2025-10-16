@@ -19,9 +19,7 @@ object SecurityTextAttributes {
             STYLE
         )
 
-    val VeryLow = bg(45, 156, 219, OPACITY)   // #2D9CDB
     val Low     = bg(86, 204, 242, OPACITY)   //
     val Medium  = bg(242, 201, 76,  OPACITY)  // #F2C94C
     val High    = bg(242, 153, 74,  OPACITY)  // #F2994A
-    val VeryHigh= bg(235, 87,  87,  OPACITY)  // #EB5757
 }

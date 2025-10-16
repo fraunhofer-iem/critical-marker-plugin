@@ -35,8 +35,6 @@ class SecurityMethodAnnotator : Annotator, DumbAware {
             "LOW" -> SecurityTextAttributes.Low
             "HIGH" -> SecurityTextAttributes.High
             "MEDIUM" -> SecurityTextAttributes.Medium
-            "VERY_LOW" -> SecurityTextAttributes.VeryLow
-            "VERY_HIGH" -> SecurityTextAttributes.VeryHigh
             else -> SecurityTextAttributes.Low
         }
 
@@ -44,8 +42,6 @@ class SecurityMethodAnnotator : Annotator, DumbAware {
             "LOW" -> HighlightSeverity.INFORMATION
             "HIGH" -> HighlightSeverity.WARNING
             "MEDIUM" -> HighlightSeverity.WEAK_WARNING
-            "VERY_LOW" -> HighlightSeverity.INFORMATION
-            "VERY_HIGH" -> HighlightSeverity.WARNING
             else -> HighlightSeverity.INFORMATION
         }
 

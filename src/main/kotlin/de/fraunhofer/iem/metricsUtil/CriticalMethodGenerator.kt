@@ -154,9 +154,9 @@ class DefaultCriticalMethodGenerator : CriticalMethodGenerator {
     ): String {
 
         val criticalityColor = when (criticalityLevel) {
-            "LOW" -> "#56CCF2" // amber
-            "MEDIUM" -> "#F2C94C" // orange
-            "HIGH" -> "#F2994A" // red
+            "LOW" -> "#e7b416" // amber
+            "MEDIUM" -> "#db7b2b" // orange
+            "HIGH" -> "#cc3232" // red
             else -> "#000000" // default to black if unknown
         }
 
@@ -207,6 +207,12 @@ class DefaultCriticalMethodGenerator : CriticalMethodGenerator {
         if (sig.contains("org.springframework.samples.petclinic.owner.OwnerController#findOwner"))
             return false
 
+        if (sig.contains("org.springframework.samples.petclinic.owner.OwnerController#processUpdateOwnerForm"))
+            return false
+
+        if (sig.contains("org.springframework.samples.petclinic.owner.OwnerController#showOwner"))
+            return false
+
         if (sig.contains("org.springframework.samples.petclinic.PetClinicApplication#main"))
             return false
 
@@ -223,6 +229,12 @@ class DefaultCriticalMethodGenerator : CriticalMethodGenerator {
             return false
 
         if (sig.contains("org.springframework.samples.petclinic.owner.OwnerRepositoryCustomImpl#save"))
+            return false
+
+        if (sig.contains("org.springframework.samples.petclinic.owner.OwnerRepositoryCustomImpl#findById"))
+            return false
+
+        if (sig.contains("org.springframework.samples.petclinic.owner.OwnerRepositoryCustomImpl#findByLastName"))
             return false
 
         return true

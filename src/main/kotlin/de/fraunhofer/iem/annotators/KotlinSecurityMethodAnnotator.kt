@@ -40,11 +40,9 @@ class KotlinSecurityMethodAnnotator : Annotator, DumbAware {
         if (level.equals("LOW", ignoreCase = true) && !showLowLevelExplanations) return
 
         val color = when (level.uppercase()) {
-            "VERY_LOW" -> SecurityTextAttributes.VeryLow
             "LOW" -> SecurityTextAttributes.Low
             "MEDIUM" -> SecurityTextAttributes.Medium
             "HIGH" -> SecurityTextAttributes.High
-            "VERY_HIGH" -> SecurityTextAttributes.VeryHigh
             else -> SecurityTextAttributes.Low
         }
 
