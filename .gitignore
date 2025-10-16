@@ -36,3 +36,6 @@ app.properties
 PERSISTENT_CACHING.md
 SOLUTION_ARCHITECTURE.md
 test_cache.md
+
+demo/demo.mov
+demo/demo.mp4
